@@ -5,13 +5,21 @@ extern crate rocket;
 extern crate rocket_contrib;
 
 use rocket_contrib::templates::Template;
+use rocket_contrib::serve::StaticFiles;
 
 mod ui;
 
 fn main() {
-    rocket::ignite().mount(
+    rocket::ignite()
+    .mount(
         "/", 
-        routes![ui::index]
-    ).attach(Template::fairing())
+        routes![
+            ui::index,
+            ui::mud_runner,
+            ui::snow_runner
+        ]
+    )
+    .mount("/images", StaticFiles::from("./images"))
+    .attach(Template::fairing())
     .launch();
 }
