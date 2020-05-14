@@ -25,7 +25,7 @@
         <h1>MudSaver</h1>
         <div class="w3-container">A savegame manager for MudRunner and SnowRunner</div>
         <button id="navBtn" class="w3-button w3-orange w3-xlarge w3-display-right" onclick="w3_open()">☰</button>
-        <button id="homeBtn" class="w3-button w3-orange w3-xlarge w3-display-left" onclick="load_subpage('/overview', false)">ᐸ</button>
+        <button id="homeBtn" class="w3-button w3-orange w3-xlarge w3-display-left" style="display: none;" onclick="load_subpage('/overview', false)">ᐸ</button>
     </div>
     <!-- Content -->
     <div id="main" class="w3-container">
@@ -47,6 +47,9 @@
         }
         
         function load_subpage(target, showBack) {
+            if (!showBack) {
+                w3.hide('#homeBtn');
+            }
             var elem = document.getElementById("main");
             var xhttp = new XMLHttpRequest();
             xhttp.open("GET", target);
@@ -57,9 +60,7 @@
                         elem.innerHTML = xhttp.responseText;
                         if (showBack) {
                             w3.show('#homeBtn');
-                        } else {
-                            w3.hide('#homeBtn');
-                        };
+                        }
                     }
                     if (this.status == 404) { elem.innerHTML = "Error loading Subpage!"; }
                 }
