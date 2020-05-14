@@ -7,3 +7,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rocket = "0.4.4"
+serde_json = "1.0.53"
+web-view = { version = "0.5.4", features = ["edge"] }
+
+[dependencies.rocket_contrib]
+version = "0.4.4"
+default-features = false
+features = ["handlebars_templates", "serve"]
