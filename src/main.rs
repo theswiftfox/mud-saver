@@ -41,7 +41,7 @@ fn start_ui() {
         .unwrap();
 }
 
-fn with_ui() {
+fn start_with_ui() {
     let _ = thread::spawn(|| {
         start_rocket()
     });
@@ -51,7 +51,7 @@ fn with_ui() {
     std::process::exit(0);
 }
 
-fn headless() {
+fn start_headless() {
     start_rocket();
 }
 
@@ -59,11 +59,11 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() > 1 {
         if &args[1] == "--with-ui" {
-            with_ui()
+            start_with_ui()
         } else {
             println!("argument not recognized")
         }
     } else {
-        headless()
+        start_headless()
     }
 }
