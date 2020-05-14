@@ -17,11 +17,13 @@ fn start_rocket() {
         "/", 
         routes![
             ui::index,
+            ui::overview,
             ui::mud_runner,
             ui::snow_runner
         ]
     )
     .mount("/images", StaticFiles::from("./images"))
+    .mount("/static", StaticFiles::from("./static"))
     .attach(Template::fairing())
     .launch();
 }
