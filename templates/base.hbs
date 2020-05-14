@@ -10,22 +10,27 @@
     <meta name="author" content="The Author">
 
     <link rel="stylesheet" href="/static/w3.css">
+    <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-{{ this }}.css">
     <script src="/static/w3.js"></script>
 </head>
+
 <body onload="load_subpage('/overview', false)">
     <!-- Sidebar -->
-    <div class="w3-sidebar w3-display-container w3-bar-block w3-card w3-animate-right" style="display:none;right:0" id="side">
-        <button onclick="w3_close()" class="w3-bar-item w3-gray w3-button w3-large">Close &times;</button>
+    <div class="w3-sidebar w3-display-container w3-bar-block w3-card w3-animate-right" style="display:none;right:0"
+        id="side">
+        <button onclick="w3_close()" class="w3-bar-item w3-theme-action w3-button w3-large">Close &times;</button>
         <a href="#" class="w3-bar-item w3-button">Settings</a>
-        <a href="https://github.com/theswiftfox/mud-saver/issues" target="_blank" class="w3-bar-item w3-button">Report Issue</a>
+        <a href="https://github.com/theswiftfox/mud-saver/issues" target="_blank" class="w3-bar-item w3-button">Report
+            Issue</a>
         <div class="w3-panel w3-display-bottomleft">Version: 1.0.0</div>
     </div>
     <!-- Topbar -->
-    <div class="w3-container w3-display-container w3-orange w3-center">
+    <div class="w3-container w3-display-container w3-theme w3-center">
         <h1>MudSaver</h1>
         <div class="w3-container">A savegame manager for MudRunner and SnowRunner</div>
-        <button id="navBtn" class="w3-button w3-orange w3-xlarge w3-display-right" onclick="w3_open()">☰</button>
-        <button id="homeBtn" class="w3-button w3-orange w3-xlarge w3-display-left" style="display: none;" onclick="load_subpage('/overview', false)">ᐸ</button>
+        <button id="navBtn" class="w3-button w3-theme w3-xlarge w3-display-right" onclick="w3_open()">☰</button>
+        <button id="homeBtn" class="w3-button w3-theme w3-xlarge w3-display-left" style="display: none;"
+            onclick="load_subpage('/overview', false)">ᐸ</button>
     </div>
     <!-- Content -->
     <div id="main" class="w3-container">
@@ -45,7 +50,7 @@
             document.getElementById("side").style.display = "none";
             document.getElementById("navBtn").style.display = 'inline-block';
         }
-        
+
         function load_subpage(target, showBack) {
             if (!showBack) {
                 w3.hide('#homeBtn');
@@ -54,9 +59,9 @@
             var xhttp = new XMLHttpRequest();
             xhttp.open("GET", target);
             xhttp.send();
-            xhttp.onreadystatechange = function() {
+            xhttp.onreadystatechange = function () {
                 if (xhttp.readyState == 4) {
-                    if (this.status == 200) { 
+                    if (this.status == 200) {
                         elem.innerHTML = xhttp.responseText;
                         if (showBack) {
                             w3.show('#homeBtn');

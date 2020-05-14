@@ -1,9 +1,11 @@
 use rocket::http::Status;
 use rocket_contrib::templates::Template;
 
+use crate::SETTINGS;
+
 #[get("/")]
 pub fn index() -> Result<Template, Status> {
-    Ok(Template::render("base", ()))
+    Ok(Template::render("base", SETTINGS.get_color()))
 }
 
 #[get("/overview")]

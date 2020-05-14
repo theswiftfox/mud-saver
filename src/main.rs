@@ -3,48 +3,62 @@
 #[macro_use]
 extern crate rocket;
 extern crate rocket_contrib;
+extern crate serde;
+#[macro_use]
+extern crate lazy_static;
 
-use rocket_contrib::templates::Template;
 use rocket_contrib::serve::StaticFiles;
+use rocket_contrib::templates::Template;
 
 use std::thread;
 
-mod ui;
+mod appconfig;
+mod pages;
+
+lazy_static! {
+    static ref SETTINGS: appconfig::Settings = appconfig::Settings::try_load();
+}
 
 fn start_rocket() {
     rocket::ignite()
-    .mount(
-        "/", 
-        routes![
-            ui::index,
-            ui::overview,
-            ui::mud_runner,
-            ui::snow_runner
-        ]
-    )
-    .mount("/images", StaticFiles::from("./images"))
-    .mount("/static", StaticFiles::from("./static"))
-    .attach(Template::fairing())
-    .launch();
+        .mount(
+            "/",
+            routes![
+                pages::index,
+                pages::overview,
+                pages::mud_runner,
+                pages::snow_runner
+            ],
+        )
+        .mount("/images", StaticFiles::from("./images"))
+        .mount("/static", StaticFiles::from("./static"))
+        .attach(Template::fairing())
+        .launch();
 }
 
 fn start_ui() {
+    let res = SETTINGS.get_resolution();
     web_view::builder()
-		.title("MudSaver")
-		.content(web_view::Content::Url("http://localhost:8000"))
-		.size(800, 600)
-		.resizable(true)
-		.debug(true)
-		.user_data(())
+        .title("MudSaver")
+        .content(web_view::Content::Url("http://localhost:8000"))
+        .size(res.0 as i32, res.1 as i32)
+        .resizable(true)
+        .debug(true)
+        .user_data(())
         .invoke_handler(|_webview, _arg| Ok(()))
         .run()
         .unwrap();
 }
 
+<<<<<<< HEAD
 fn start_with_ui() {
     let _ = thread::spawn(|| {
         start_rocket()
     });
+=======
+fn with_ui() {
+    let _ = thread::spawn(|| start_rocket());
+>>>>>>> 429f97f... #10 - load settings.json
     thread::sleep(std::time::Duration::from_secs(1));
     start_ui();
 
