@@ -50,15 +50,10 @@ fn start_ui() {
         .unwrap();
 }
 
-<<<<<<< HEAD
 fn start_with_ui() {
     let _ = thread::spawn(|| {
         start_rocket()
     });
-=======
-fn with_ui() {
-    let _ = thread::spawn(|| start_rocket());
->>>>>>> 429f97f... #10 - load settings.json
     thread::sleep(std::time::Duration::from_secs(1));
     start_ui();
 
