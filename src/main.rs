@@ -11,12 +11,13 @@ use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
 
 use std::thread;
+use std::sync::Mutex;
 
 mod appconfig;
 mod pages;
 
 lazy_static! {
-    static ref SETTINGS: appconfig::Settings = appconfig::Settings::try_load();
+    static ref SETTINGS: Mutex<appconfig::Settings> = Mutex::new(appconfig::try_load());
 }
 
 fn start_rocket() {
@@ -27,7 +28,9 @@ fn start_rocket() {
                 pages::index,
                 pages::overview,
                 pages::mud_runner,
-                pages::snow_runner
+                pages::snow_runner,
+                pages::settings,
+                pages::save_settings,
             ],
         )
         .mount("/images", StaticFiles::from("./images"))
@@ -37,7 +40,7 @@ fn start_rocket() {
 }
 
 fn start_ui() {
-    let res = SETTINGS.get_resolution();
+    let res = (1000, 600);
     web_view::builder()
         .title("MudSaver")
         .content(web_view::Content::Url("http://localhost:8000"))

@@ -19,39 +19,88 @@
     <div class="w3-sidebar w3-display-container w3-bar-block w3-card w3-animate-right" style="display:none;right:0"
         id="side">
         <button onclick="w3_close()" class="w3-bar-item w3-theme-action w3-button w3-large">Close &times;</button>
-        <a href="#" class="w3-bar-item w3-button">Settings</a>
+        <div class="w3-bar-item w3-button" onclick="load_settings()">Settings</div>
         <a href="https://github.com/theswiftfox/mud-saver/issues" target="_blank" class="w3-bar-item w3-button">Report
             Issue</a>
         <div class="w3-panel w3-display-bottomleft">Version: 1.0.0</div>
     </div>
     <!-- Topbar -->
     <div class="w3-container w3-display-container w3-theme w3-center">
-        <h1>MudSaver</h1>
-        <div class="w3-container">A savegame manager for MudRunner and SnowRunner</div>
-        <button id="navBtn" class="w3-button w3-theme w3-xlarge w3-display-right" onclick="w3_open()">☰</button>
+        <div id="overview-header" class="w3-container">
+            <h1>MudSaver</h1>
+            A savegame manager for MudRunner and SnowRunner
+        </div>
+        <div id="snowrunner-header" class="w3-container" style="display: none;">
+            <h1>SnowRunner</h1>
+            Backup or load savegame
+        </div>
+        <div id="mudrunner-header" class="w3-container" style="display: none;">
+            <h1>MudRunner</h1>
+            Backup or load savegame
+        </div>
+        <button id="menuBtn" class="w3-button w3-theme w3-xlarge w3-display-right" onclick="w3_open()">☰</button>
         <button id="homeBtn" class="w3-button w3-theme w3-xlarge w3-display-left" style="display: none;"
-            onclick="load_subpage('/overview', false)">ᐸ</button>
+            onclick="load_subpage('/overview')">ᐸ</button>
     </div>
     <!-- Content -->
     <div id="main" class="w3-container">
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="w3-modal">
+        <div class="w3-modal-content">
+            <div class="w3-card">
+                <header class="w3-panel w3-theme">
+                    <h2>MudSaver Settings</h2>
+                </header>
+                <div class="w3-container">
+                    <span onclick="document.getElementById('settings-modal').style.display='none'"
+                        class="w3-button w3-display-topright">&times;</span>
+                    <ul class="w3-ul">
+                        <li class="w3-bar">
+                            <div class="w3-bar-item">Color Theme:</div>
+                            <div class="w3-bar-item w3-right">
+                                <div class="w3-dropdown-hover">
+                                    <button id="selected-theme" class="w3-button" style="width: 150px;"></button>
+                                    <div class="w3-dropdown-content w3-bar-block w3-border">
+                                        <a href="#" class="w3-bar-item w3-button w3-hover-teal" onclick="set_selected_theme('teal')">Teal</a>
+                                        <a href="#" class="w3-bar-item w3-button w3-hover-deep-orange" onclick="set_selected_theme('deep-orange')">Deep Orange</a>
+                                        <a href="#" class="w3-bar-item w3-button w3-hover-brown" onclick="set_selected_theme('brown')">Brown</a>
+                                        <a href="#" class="w3-bar-item w3-button w3-hover-black" onclick="set_selected_theme('black')">Black</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <footer class="w3-container w3-light-gray">
+                    <div class="w3-container">
+                        <button class="w3-right w3-button" onclick="save_settings()">Save</button>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
 
     <script>
+        var settings;
+
         function w3_open() {
             document.getElementById("main").style.marginRight = "15%";
             document.getElementById("side").style.width = "15%";
             document.getElementById("side").style.display = "block";
-            document.getElementById("navBtn").style.display = 'none';
+            document.getElementById("menuBtn").style.display = 'none';
         }
 
         function w3_close() {
             document.getElementById("main").style.marginRight = "0%";
+            document.getElementById("side").style.width = "0%";
             document.getElementById("side").style.display = "none";
-            document.getElementById("navBtn").style.display = 'inline-block';
+            document.getElementById("menuBtn").style.display = 'inline-block';
         }
 
-        function load_subpage(target, showBack) {
+        function load_subpage(target) {
+            var showBack = target.includes('mud-runner') || target.includes('snow-runner');
             if (!showBack) {
                 w3.hide('#homeBtn');
             }
@@ -65,6 +114,18 @@
                         elem.innerHTML = xhttp.responseText;
                         if (showBack) {
                             w3.show('#homeBtn');
+                            w3.hide("#overview-header");
+                            w3.hide("#menuBtn");
+                            if (target.includes('mud-runner')) {
+                                w3.show("#mudrunner-header");
+                            } else {
+                                w3.show("#snowrunner-header");
+                            }
+                        } else {
+                            w3.hide("#snowrunner-header");
+                            w3.hide("#mudrunner-header");
+                            w3.show("#overview-header");
+                            w3.show("#menuBtn")
                         }
                     }
                     if (this.status == 404) { elem.innerHTML = "Error loading Subpage!"; }
@@ -73,5 +134,44 @@
 
             return;
         }
+
+        function load_settings() {
+            var elem = document.getElementById('settings-modal');
+            var http = new XMLHttpRequest();
+            http.open("GET", '/settings');
+            http.send();
+            http.onreadystatechange = function () {
+                if (http.readyState == 4 && this.status == 200) {
+                    settings = JSON.parse(http.responseText);
+                    set_selected_theme(settings.color);
+                    elem.style.display='block';
+                }
+            };
+        }
+
+        function set_selected_theme(theme) {
+            settings.color = theme;
+            var elem = document.getElementById("selected-theme");
+            var oldColor = elem.innerHTML;
+            elem.innerHTML = theme;
+            if (oldColor != '') {
+                elem.classList.remove('w3-' + oldColor);
+            }
+            elem.classList.add('w3-' + theme);
+        }
+
+        function save_settings() {
+            var http = new XMLHttpRequest();
+            http.open("POST", '/settings');
+            http.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            http.send(JSON.stringify(settings));
+            http.onreadystatechange = function () {
+                if (http.readyState == 4 && this.status == 200) {
+                    alert('Saved settings!');
+                    location.reload();
+                }
+            }
+        }
+
     </script>
 </body>
