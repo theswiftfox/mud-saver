@@ -1,3 +1,4 @@
+![Rust](https://github.com/theswiftfox/mud-saver/workflows/Rust/badge.svg?branch=develop)
 # mud-saver
 
 A savegame manager for MudRunner™ and SnowRunner™.  
