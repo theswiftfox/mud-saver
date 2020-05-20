@@ -1,3 +1,24 @@
 <div class="w3-panel">
     <h2>SnowRunner Saves</h2>
+    <div class="w3-container">
+        <ul class="w3-ul w3-card">
+            {{#each this }}
+            <li class="w3-bar">
+                <div class="w3-bar-item w3-tooltip">
+                    {{#if this.alias}}
+                    <span class="w3-large">{{this.alias}}</span>
+                    <span class="w3-text w3-tag w3-round-xlarge w3-theme">{{this.uuid}}</span>
+                    {{else}}
+                    <span class="w3-large">{{this.uuid}}</span>
+                    {{/if}}
+                    <br>
+                    <span>{{this.modified}}</span>
+                </div>
+                <div class="w3-bar-item w3-right">
+                    <button class="w3-button w3-theme" style="width: 150px;">Save</button>
+                </div>
+            </li>
+            {{/each}}
+        </ul>
+    </div>
 </div>
