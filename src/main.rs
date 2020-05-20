@@ -2,19 +2,24 @@
 
 #[macro_use]
 extern crate rocket;
+#[macro_use]
 extern crate rocket_contrib;
 extern crate serde;
 #[macro_use]
 extern crate lazy_static;
+extern crate chrono;
+extern crate dirs;
 
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
 
-use std::thread;
 use std::sync::Mutex;
+use std::thread;
 
 mod appconfig;
+mod error;
 mod pages;
+mod snowrunner;
 
 lazy_static! {
     static ref SETTINGS: Mutex<appconfig::Settings> = Mutex::new(appconfig::try_load());
@@ -54,9 +59,7 @@ fn start_ui() {
 }
 
 fn start_with_ui() {
-    let _ = thread::spawn(|| {
-        start_rocket()
-    });
+    let _ = thread::spawn(|| start_rocket());
     thread::sleep(std::time::Duration::from_secs(1));
     start_ui();
 
