@@ -2,22 +2,45 @@
 
 #[macro_use]
 extern crate rocket;
+#[macro_use]
 extern crate rocket_contrib;
 extern crate serde;
 #[macro_use]
 extern crate lazy_static;
+extern crate chrono;
+extern crate dirs;
 
 use rocket_contrib::serve::StaticFiles;
-use rocket_contrib::templates::Template;
+use rocket_contrib::templates::{
+    handlebars::{Context, Handlebars, Helper, HelperResult, Output, RenderContext, RenderError},
+    Template,
+};
 
-use std::thread;
+use chrono::{offset::Utc, DateTime};
+
 use std::sync::Mutex;
+use std::thread;
 
 mod appconfig;
+mod error;
 mod pages;
+mod snowrunner;
 
 lazy_static! {
     static ref SETTINGS: Mutex<appconfig::Settings> = Mutex::new(appconfig::try_load());
+}
+
+const APP_DATA_NAME: &'static str = "MudSaver";
+
+pub fn get_app_data_dir() -> std::io::Result<std::path::PathBuf> {
+    let path = dirs::data_dir();
+    if path.is_some() {
+        let mut p = path.unwrap();
+        p.push(APP_DATA_NAME);
+        Ok(p)
+    } else {
+        std::env::current_dir()
+    }
 }
 
 fn start_rocket() {
@@ -35,7 +58,36 @@ fn start_rocket() {
         )
         .mount("/images", StaticFiles::from("./images"))
         .mount("/static", StaticFiles::from("./static"))
-        .attach(Template::fairing())
+        .attach(Template::custom(|engines| {
+            engines.handlebars.register_helper(
+                "date-time",
+                Box::new(
+                    |h: &Helper,
+                     _: &Handlebars,
+                     _: &Context,
+                     _: &mut RenderContext,
+                     out: &mut dyn Output|
+                     -> HelperResult {
+                        if let Some(date_val) = h.hash().get("date") {
+                            let date_js = date_val.value();
+                            if let Ok(date) =
+                                serde_json::from_value::<DateTime<Utc>>(date_js.clone())
+                            {
+                                let local_date = date.naive_local();
+                                let date_str = format!(
+                                    "{} - {}",
+                                    local_date.date(),
+                                    local_date.time().format("%H:%M:%S")
+                                );
+                                out.write(&date_str)?;
+                                return Ok(());
+                            }
+                        }
+                        Err(RenderError::new("Error parsing date"))
+                    },
+                ),
+            );
+        }))
         .launch();
 }
 
@@ -54,9 +106,7 @@ fn start_ui() {
 }
 
 fn start_with_ui() {
-    let _ = thread::spawn(|| {
-        start_rocket()
-    });
+    let _ = thread::spawn(|| start_rocket());
     thread::sleep(std::time::Duration::from_secs(1));
     start_ui();
 
