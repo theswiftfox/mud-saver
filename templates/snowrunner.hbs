@@ -1,26 +1,45 @@
 <div class="w3-panel">
+<<<<<<< HEAD
     <h2>Active Profiles</h2>
+=======
+    <h2>SnowRunner Saves</h2>
+>>>>>>> 9f1321f17ca634f9af2727f3481c62b66e213adb
     <div class="w3-container">
         <ul class="w3-ul w3-card">
             {{#each this }}
             <li class="w3-bar">
                 <div class="w3-bar-item w3-tooltip">
+<<<<<<< HEAD
                     {{#if this.meta_data.alias}}
                     <span class="w3-large">{{this.meta_data.alias}}</span>
+=======
+                    {{#if this.alias}}
+                    <span class="w3-large">{{this.alias}}</span>
+>>>>>>> 9f1321f17ca634f9af2727f3481c62b66e213adb
                     <span class="w3-text w3-tag w3-round-xlarge w3-theme">{{this.uuid}}</span>
                     {{else}}
                     <span class="w3-large">{{this.uuid}}</span>
                     {{/if}}
                     <br>
+<<<<<<< HEAD
                     <span>{{date-time date=this.modified}}</span>
                 </div>
                 <div class="w3-bar-item w3-right">
                     <button class="w3-button w3-theme" style="width: 150px;">Backup</button>
+=======
+                    <span>{{this.modified}}</span>
+                </div>
+                <div class="w3-bar-item w3-right">
+                    <button class="w3-button w3-theme" style="width: 150px;">Save</button>
+>>>>>>> 9f1321f17ca634f9af2727f3481c62b66e213adb
                 </div>
             </li>
             {{/each}}
         </ul>
     </div>
+<<<<<<< HEAD
     <br>
     <h2>Stored Savegames</h2>
+=======
+>>>>>>> 9f1321f17ca634f9af2727f3481c62b66e213adb
 </div>
