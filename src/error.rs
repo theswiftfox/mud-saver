@@ -6,6 +6,7 @@ pub enum AppError {
     SettingsNotFound(String),
     SRnoProfileFound(String),
     HomeDirNotFound(String),
+    Unimplemented,
 }
 
 impl Display for AppError {
@@ -16,6 +17,7 @@ impl Display for AppError {
             AppError::HomeDirNotFound(what) => {
                 write!(f, "Home directory could not be found: {}", what)
             }
+            AppError::Unimplemented => write!(f, "Method not implemented"),
         }
     }
 }
