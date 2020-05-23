@@ -3,7 +3,7 @@ use rocket_contrib::json::{Json, JsonValue};
 use rocket_contrib::templates::Template;
 
 use crate::appconfig::Settings;
-use crate::snowrunner::SnowRunnerProfile;
+use crate::snowrunner::SnowRunnerSave;
 use crate::SETTINGS;
 
 #[get("/")]
@@ -26,7 +26,7 @@ pub fn mud_runner() -> Result<Template, Status> {
 }
 #[get("/snow-runner")]
 pub fn snow_runner() -> Result<Template, JsonValue> {
-    let profiles = match SnowRunnerProfile::load_profiles_from_disk() {
+    let profiles = match SnowRunnerSave::get_available_snowrunner_saves() {
         Ok(p) => p,
         Err(e) => return Err(json!(e)),
     };

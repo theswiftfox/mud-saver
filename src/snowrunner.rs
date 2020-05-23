@@ -11,7 +11,7 @@ const SAVEGAME_FILE_EXT: &'static str = "dat";
 const DATA_FOLDER: &'static str = "sr-data";
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SnowRunnerProfile {
+pub struct SnowRunnerSave {
     uuid: String,
     modified: DateTime<Utc>,
     meta_data: SnowRunnerMetaData,
@@ -30,8 +30,8 @@ struct SavedProfile {
     file_path: String,
 }
 
-impl SnowRunnerProfile {
-    pub fn load_profiles_from_disk() -> Result<Vec<SnowRunnerProfile>, AppError> {
+impl SnowRunnerSave {
+    pub fn get_available_snowrunner_saves() -> Result<Vec<SnowRunnerSave>, AppError> {
         let mut path = match dirs::home_dir() {
             Some(d) => d,
             None => return Err(AppError::HomeDirNotFound(String::from(""))),
@@ -45,7 +45,7 @@ impl SnowRunnerProfile {
         let mut profile_dirs: Vec<DirEntry> = Vec::new();
         for dir in dir_list {
             if let Ok(d) = dir {
-                if SnowRunnerProfile::is_profile_dir(&d) {
+                if SnowRunnerSave::is_profile_dir(&d) {
                     profile_dirs.push(d)
                 }
             }
@@ -56,7 +56,7 @@ impl SnowRunnerProfile {
             )));
         }
 
-        let mut profiles = Vec::<SnowRunnerProfile>::new();
+        let mut profiles = Vec::<SnowRunnerSave>::new();
         for profile in profile_dirs {
             let modified = match match profile.metadata() {
                 Ok(meta) => match meta.modified() {
@@ -70,8 +70,8 @@ impl SnowRunnerProfile {
             };
             if let Some(uuid_osstr) = profile.path().file_name() {
                 if let Some(uuid) = uuid_osstr.to_str() {
-                    let meta_data = SnowRunnerProfile::try_load_metadata(uuid);
-                    profiles.push(SnowRunnerProfile {
+                    let meta_data = SnowRunnerSave::try_load_metadata(uuid);
+                    profiles.push(SnowRunnerSave {
                         uuid: String::from(uuid),
                         modified: modified,
                         meta_data: meta_data,
@@ -81,6 +81,10 @@ impl SnowRunnerProfile {
         }
 
         Ok(profiles)
+    }
+
+    pub fn get_archived_snowrunner_saves() -> Result<Vec<SnowRunnerSave>, AppError> {
+        Err(AppError::Unimplemented)
     }
 
     fn try_load_metadata(profile: &str) -> SnowRunnerMetaData {
@@ -111,7 +115,7 @@ impl SnowRunnerProfile {
         }
     }
 
-    fn do_backup(&mut self, name: &str) -> Result<(), AppError> {
+    fn archive_savegame(&mut self, name: &str) -> Result<(), AppError> {
         // todo: create archive of current profile folder in app-data;
         // add saved profile to metadata
         // store metadata
