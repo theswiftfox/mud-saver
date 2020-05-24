@@ -16,6 +16,7 @@ use std::sync::Mutex;
 mod error;
 mod appconfig;
 mod pages;
+mod mud_runner_saves;
 
 lazy_static! {
     static ref SETTINGS: Mutex<appconfig::Settings> = Mutex::new(appconfig::try_load());
