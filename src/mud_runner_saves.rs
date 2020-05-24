@@ -10,13 +10,13 @@ pub struct MudrunnerSave {
 }
 
 // unction to get a vector of the mudrunner savegames' titles/user names in our app's storage
-pub fn get_archived_mudrunner_saves<'a>() -> Result<Vec<MudrunnerSave> , AppError> {
+pub fn get_archived_mudrunner_saves() -> Result<Vec<MudrunnerSave> , AppError> {
     Err(AppError)
 }
 
 
 // function to get a vector of the mudrunner savegames' file names in Mudrunner's storage
-pub fn get_available_mudrunner_saves<'a>() -> Result<Vec<MudrunnerSave> , AppError> {
+pub fn get_available_mudrunner_saves() -> Result<Vec<MudrunnerSave> , AppError> {
     Err(AppError)
 }
 
