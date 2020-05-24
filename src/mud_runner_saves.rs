@@ -1,7 +1,7 @@
-pub struct MudrunnerSave<'a> {
-    user_name: &'a str,
+pub struct MudrunnerSave {
+    user_name: String,
     file_hash: u64,
-    original_name: &'a str,
+    original_name: String,
 }
 
 // unction to get a vector of the mudrunner savegames' titles/user names in our app's storage
