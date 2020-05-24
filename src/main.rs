@@ -1,22 +1,22 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
+extern crate chrono;
+extern crate dirs;
+#[macro_use]
+extern crate lazy_static;
 #[macro_use]
 extern crate rocket;
 #[macro_use]
 extern crate rocket_contrib;
 extern crate serde;
-#[macro_use]
-extern crate lazy_static;
-extern crate chrono;
-extern crate dirs;
+extern crate zip;
 
+use chrono::{offset::Utc, DateTime};
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::{
     handlebars::{Context, Handlebars, Helper, HelperResult, Output, RenderContext, RenderError},
     Template,
 };
-
-use chrono::{offset::Utc, DateTime};
 
 use std::sync::Mutex;
 use std::thread;
