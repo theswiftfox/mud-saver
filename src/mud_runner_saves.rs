@@ -21,11 +21,11 @@ pub fn get_available_mudrunner_saves<'a>() -> Result<Vec<MudrunnerSave> , AppErr
 }
 
 // function to archive a specific savegame to our app's storage
-pub fn archive_savegame(savegame: &MudrunnerSave) -> Result<(), std::io::ErrorKind> {
+pub fn archive_savegame(savegame: &MudrunnerSave) -> Result<(), AppError> {
     Err(std::io::ErrorKind::PermissionDenied)
 }
 
 // function to install a specific savegame (overwriting the existing one)
-pub fn install_savegame(savegame: &MudrunnerSave) -> Result<(), std::io::ErrorKind> {
+pub fn install_savegame(savegame: &MudrunnerSave) -> Result<(), AppError> {
     Err(std::io::ErrorKind::PermissionDenied)
 }
