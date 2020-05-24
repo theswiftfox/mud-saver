@@ -13,6 +13,7 @@ use rocket_contrib::templates::Template;
 use std::thread;
 use std::sync::Mutex;
 
+mod error;
 mod appconfig;
 mod pages;
 
