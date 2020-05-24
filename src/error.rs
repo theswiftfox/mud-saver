@@ -5,7 +5,8 @@ use std::fmt::{Display, Formatter, Result};
 pub enum AppError {
     SettingsNotFound(String),
     SRnoProfileFound(String),
-    HomeDirNotFound(String),
+    HomeDirNotFound,
+    FileReadError,
     Unimplemented,
 }
 
@@ -14,9 +15,8 @@ impl Display for AppError {
         match self {
             AppError::SettingsNotFound(what) => write!(f, "Settings file not found: {}", what),
             AppError::SRnoProfileFound(what) => write!(f, "SnowRunner profile not found: {}", what),
-            AppError::HomeDirNotFound(what) => {
-                write!(f, "Home directory could not be found: {}", what)
-            }
+            AppError::HomeDirNotFound => write!(f, "Home directory could not be found!"),
+            AppError::FileReadError => write!(f, "Error reading savegames from disk!"),
             AppError::Unimplemented => write!(f, "Method not implemented"),
         }
     }
