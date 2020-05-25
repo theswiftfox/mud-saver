@@ -8,7 +8,7 @@ use zip::ZipWriter;
 
 use crate::error::AppError;
 
-const PROFILE_PATH: &'static str = "\\My Games\\SnowRunner\\base\\storage";
+const PROFILE_PATH: &'static str = "My Games\\SnowRunner\\base\\storage";
 const SAVEGAME_FILE_EXT: &'static str = "dat";
 const DATA_FOLDER: &'static str = "sr-data";
 
@@ -113,6 +113,7 @@ fn get_snowrunner_data_dir() -> Result<PathBuf, AppError> {
         Some(d) => d,
         None => return Err(AppError::HomeDirNotFound),
     };
+    dbg!(&path);
     path.push(PROFILE_PATH);
     Ok(path)
 }
