@@ -9,6 +9,7 @@ extern crate rocket;
 #[macro_use]
 extern crate rocket_contrib;
 extern crate serde;
+extern crate uuid;
 extern crate zip;
 
 use chrono::{offset::Utc, DateTime};
@@ -54,6 +55,7 @@ fn start_rocket() {
                 pages::snow_runner,
                 pages::settings,
                 pages::save_settings,
+                pages::store_snow_runner_profile,
             ],
         )
         .mount("/images", StaticFiles::from("./images"))
