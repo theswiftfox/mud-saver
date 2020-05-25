@@ -9,22 +9,24 @@ pub struct MudrunnerSave {
     original_name: String,
 }
 
+impl MudrunnerSave {
 // unction to get a vector of the mudrunner savegames' titles/user names in our app's storage
-pub fn get_archived_mudrunner_saves() -> Result<Vec<MudrunnerSave> , AppError> {
-    Err(AppError::SettingsNotFound(String::from("")))
-}
+    pub fn get_archived_mudrunner_saves() -> Result<Vec<MudrunnerSave> , AppError> {
+        Err(AppError::SettingsNotFound(String::from("")))
+    }
 
-// function to get a vector of the mudrunner savegames' file names in Mudrunner's storage
-pub fn get_available_mudrunner_saves() -> Result<Vec<MudrunnerSave> , AppError> {
-    Err(AppError::SettingsNotFound(String::from("")))
-}
+    // function to get a vector of the mudrunner savegames' file names in Mudrunner's storage
+    pub fn get_available_mudrunner_saves() -> Result<Vec<MudrunnerSave> , AppError> {
+        Err(AppError::SettingsNotFound(String::from("")))
+    }
 
-// function to archive a specific savegame to our app's storage
-pub fn archive_savegame(savegame: &MudrunnerSave) -> Result<(), AppError> {
-    Err(AppError::SettingsNotFound(String::from("")))
-}
+    // function to archive a specific savegame to our app's storage
+    pub fn archive_savegame(& self, savegame: &MudrunnerSave) -> Result<(), AppError> {
+        Err(AppError::SettingsNotFound(String::from("")))
+    }
 
-// function to install a specific savegame (overwriting the existing one)
-pub fn install_savegame(savegame: &MudrunnerSave) -> Result<(), AppError> {
-    Err(AppError::SettingsNotFound(String::from("")))
+    // function to install a specific savegame (overwriting the existing one)
+    pub fn install_savegame(& self, savegame: &MudrunnerSave) -> Result<(), AppError> {
+        Err(AppError::SettingsNotFound(String::from("")))
+    }
 }
