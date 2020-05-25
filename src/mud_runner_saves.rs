@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
 
+use std::path::PathBuf;
+
 use crate::error::AppError;
+
+const PROFILE_PATH: &'static str = "\\SpinTires MudRunner\\UserSaves";
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct MudrunnerSave {
@@ -29,4 +33,13 @@ impl MudrunnerSave {
     pub fn install_savegame(& self, savegame: &MudrunnerSave) -> Result<(), AppError> {
         Err(AppError::SettingsNotFound(String::from("")))
     }
+}
+
+fn get_mudrunner_data_dir () -> Result<PathBuf, AppError> {
+    let mut path = match dirs::config_dir() {
+        Some(d) => d,
+        None => return Err(AppError::HomeDirNotFound(String::from("")))
+    };
+    path.push(PROFILE_PATH);
+    Ok(path)
 }
