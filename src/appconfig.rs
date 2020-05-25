@@ -1,9 +1,14 @@
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fs::File, io::BufReader};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Settings {
+    #[serde(default = "default_color")]
     color: String,
+    #[serde(default = "default_enabled")]
+    enable_mudrunner: bool,
+    #[serde(default = "default_enabled")]
+    enable_snowrunner: bool,
 }
 
 const SETTINGS_FILE: &'static str = "settings.json";
@@ -20,12 +25,24 @@ pub fn load() -> Result<Settings, Box<dyn Error>> {
 pub fn try_load() -> Settings {
     match load() {
         Ok(s) => s,
-        Err(e) => panic!("Loading settings failed: {}", e),
+        Err(e) => {
+            dbg!("Loading settings failed: {}", e);
+            Settings::default()
+        }
     }
 }
 
 impl Settings {
+    fn default() -> Settings {
+        Settings {
+            color: default_color(),
+            enable_mudrunner: default_enabled(),
+            enable_snowrunner: default_enabled(),
+        }
+    }
+
     pub fn store(&self) -> Result<(), Box<dyn Error>> {
+        dbg!("Stored:", &self);
         serde_json::to_writer_pretty(File::create(SETTINGS_FILE)?, self)?;
 
         Ok(())
@@ -36,12 +53,19 @@ impl Settings {
         let reader = BufReader::new(file);
 
         let set: Settings = serde_json::from_reader(reader)?;
-        self.color = set.color;
-
+        *self = set;
         Ok(())
     }
 
     pub fn get_color(&self) -> String {
         self.color.clone()
     }
+}
+
+fn default_enabled() -> bool {
+    true
+}
+
+fn default_color() -> String {
+    "teal".to_string()
 }
