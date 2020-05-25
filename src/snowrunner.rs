@@ -8,7 +8,7 @@ use zip::ZipWriter;
 
 use crate::error::AppError;
 
-const PROFILE_PATH: &'static str = "Documents/My Games/SnowRunner/base/storage";
+const PROFILE_PATH: &'static str = "\\My Games\\SnowRunner\\base\\storage";
 const SAVEGAME_FILE_EXT: &'static str = "dat";
 const DATA_FOLDER: &'static str = "sr-data";
 
@@ -35,9 +35,12 @@ struct SavedProfile {
 impl SnowRunnerSave {
     pub fn get_available_snowrunner_saves() -> Result<Vec<SnowRunnerSave>, AppError> {
         let path = get_snowrunner_data_dir()?;
-        let dir_list = match read_dir(path) {
+        let dir_list = match read_dir(&path) {
             Ok(d) => d,
-            Err(e) => return Err(AppError::SRnoProfileFound(e.to_string())),
+            Err(e) => {
+                dbg!(&path);
+                return Err(AppError::SnowRunnerProfileDirMissing(e.to_string()));
+            },
         };
 
         let mut profile_dirs: Vec<DirEntry> = Vec::new();
@@ -49,7 +52,7 @@ impl SnowRunnerSave {
             }
         }
         if profile_dirs.is_empty() {
-            return Err(AppError::SRnoProfileFound(String::from(
+            return Err(AppError::SnowRunnerNoProfile(String::from(
                 "No SnowRunner profiles found",
             )));
         }
@@ -104,8 +107,9 @@ impl SnowRunnerSave {
     }
 }
 
+// TODO: custom data dir via settings if it can not be found with default approach
 fn get_snowrunner_data_dir() -> Result<PathBuf, AppError> {
-    let mut path = match dirs::home_dir() {
+    let mut path = match dirs::document_dir() {
         Some(d) => d,
         None => return Err(AppError::HomeDirNotFound),
     };
