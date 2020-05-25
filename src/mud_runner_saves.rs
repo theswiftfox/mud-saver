@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use crate::error::AppError;
 
-const PROFILE_PATH: &'static str = "\\SpinTires MudRunner\\UserSaves";
+const PROFILE_PATH: &'static str = "SpinTires MudRunner\\UserSaves";
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct MudrunnerSave {
