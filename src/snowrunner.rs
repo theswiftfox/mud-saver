@@ -2,7 +2,7 @@ use chrono::offset::Utc;
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use std::fs::{read_dir, DirEntry, File};
-use std::io::BufReader;
+use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::PathBuf;
 use zip::ZipWriter;
 
@@ -29,18 +29,32 @@ struct SnowRunnerMetaData {
 struct SavedProfile {
     name: String,
     saved_on: DateTime<Utc>,
-    file_path: String,
+    file_path: PathBuf,
+}
+
+impl SnowRunnerMetaData {
+    pub fn default() -> SnowRunnerMetaData {
+        SnowRunnerMetaData {
+            stored_profiles: Vec::new(),
+            alias: None,
+        }
+    }
 }
 
 impl SnowRunnerSave {
+    // todo:
+    pub fn get_snowrunner_profile(profile_id: &str) -> Result<SnowRunnerSave, AppError> {
+        Err(AppError::Unimplemented)
+    }
+
     pub fn get_available_snowrunner_saves() -> Result<Vec<SnowRunnerSave>, AppError> {
-        let path = get_snowrunner_data_dir()?;
+        let path = get_snowrunner_profile_dir()?;
         let dir_list = match read_dir(&path) {
             Ok(d) => d,
             Err(e) => {
                 dbg!(&path);
                 return Err(AppError::SnowRunnerProfileDirMissing(e.to_string()));
-            },
+            }
         };
 
         let mut profile_dirs: Vec<DirEntry> = Vec::new();
@@ -88,8 +102,8 @@ impl SnowRunnerSave {
         return Err(AppError::Unimplemented);
     }
 
-    fn archive_savegame(&mut self, name: &str) -> Result<(), AppError> {
-        let mut path = get_snowrunner_data_dir()?;
+    pub fn archive_savegame(&mut self, name: &str) -> Result<(), AppError> {
+        let mut path = get_snowrunner_profile_dir()?;
         path.push(&self.uuid);
         let files_to_store = match read_dir(path) {
             Ok(files) => files,
@@ -98,17 +112,111 @@ impl SnowRunnerSave {
                 return Err(AppError::FileReadError);
             }
         };
+        let uuid = uuid::Uuid::new_v4();
+        let archive_name = format!("{}_{}.zip", uuid, name);
+        let mut target = get_snowrunner_data_dir()?;
+        target.push(&archive_name);
 
-        let archive_name = format!("{}_{}.zip", self.uuid, name);
+        // todo: move to write zip file function and on error delete this file again
+        let file = match File::create(&target) {
+            Ok(f) => f,
+            Err(e) => {
+                dbg!(&e);
+                return Err(AppError::FileCreateError(e.to_string()));
+            }
+        };
+        let writer = BufWriter::new(file);
+        let mut zip = zip::ZipWriter::new(writer);
+
+        let options =
+            zip::write::FileOptions::default().compression_method(zip::CompressionMethod::Stored);
+        for entry in files_to_store {
+            if let Ok(f) = entry {
+                if let Some(name) = f.file_name().to_str() {
+                    let mut source = match File::open(f.path()) {
+                        Ok(f) => f,
+                        Err(e) => {
+                            dbg!(&e);
+                            return Err(AppError::FileReadError);
+                        }
+                    };
+                    let mut buf = Vec::new();
+                    match source.read_to_end(&mut buf) {
+                        Ok(_) => (),
+                        Err(e) => {
+                            dbg!(&e);
+                            return Err(AppError::FileReadError);
+                        }
+                    };
+                    match zip.start_file(name, options) {
+                        Ok(_) => (),
+                        Err(e) => {
+                            dbg!(&e);
+                            return Err(AppError::FileWriteError(e.to_string()));
+                        }
+                    };
+                    match zip.write_all(&buf) {
+                        Ok(_) => (),
+                        Err(e) => {
+                            dbg!(&e);
+                            return Err(AppError::FileWriteError(e.to_string()));
+                        }
+                    };
+                }
+            }
+        }
+
+        match zip.finish() {
+            Ok(_) => (),
+            Err(e) => {
+                dbg!(&e);
+                return Err(AppError::FileWriteError(String::from(
+                    "finalizing zip file failed!",
+                )));
+            }
+        }
+
+        let saved_profile = SavedProfile {
+            name: String::from(name),
+            saved_on: Utc::now(),
+            file_path: target,
+        };
+        self.meta_data.stored_profiles.push(saved_profile);
+        self.store_metadata()?;
         // todo: create archive of current profile folder in app-data;
         // add saved profile to metadata
         // store metadata
         Ok(())
     }
+
+    fn store_metadata(&self) -> Result<(), AppError> {
+        let mut path = match get_snowrunner_data_dir() {
+            Ok(p) => p,
+            Err(e) => {
+                return Err(e);
+            }
+        };
+        path.push(format!("{}.meta", self.uuid));
+        let file = match File::create(path) {
+            Ok(f) => f,
+            Err(e) => {
+                dbg!(&e);
+                return Err(AppError::FileCreateError(e.to_string()));
+            }
+        };
+        match serde_json::to_writer_pretty(file, &self.meta_data) {
+            Ok(_) => (),
+            Err(e) => {
+                dbg!(&e);
+                return Err(AppError::FileWriteError(e.to_string()));
+            }
+        }
+
+        Ok(())
+    }
 }
 
-// TODO: custom data dir via settings if it can not be found with default approach
-fn get_snowrunner_data_dir() -> Result<PathBuf, AppError> {
+fn get_snowrunner_profile_dir() -> Result<PathBuf, AppError> {
     let mut path = match dirs::document_dir() {
         Some(d) => d,
         None => return Err(AppError::HomeDirNotFound),
@@ -118,15 +226,25 @@ fn get_snowrunner_data_dir() -> Result<PathBuf, AppError> {
     Ok(path)
 }
 
-fn try_load_metadata(profile: &str) -> SnowRunnerMetaData {
+fn get_snowrunner_data_dir() -> Result<PathBuf, AppError> {
     let mut path = match crate::get_app_data_dir() {
         Ok(p) => p,
         Err(e) => {
             dbg!(e);
-            panic!("Unable to get app data directory!");
+            return Err(AppError::AppDataDirNotFound);
         }
     };
     path.push(DATA_FOLDER);
+    Ok(path)
+}
+
+fn try_load_metadata(profile: &str) -> SnowRunnerMetaData {
+    let mut path = match get_snowrunner_data_dir() {
+        Ok(p) => p,
+        Err(e) => {
+            return SnowRunnerMetaData::default();
+        }
+    };
     path.push(format!("{}.meta", profile));
     dbg!("Loading metadata", &path);
     if let Ok(f) = File::open(path) {

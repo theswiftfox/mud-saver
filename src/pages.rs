@@ -33,6 +33,29 @@ pub fn snow_runner() -> Result<Template, JsonValue> {
     Ok(Template::render("snowrunner", profiles))
 }
 
+#[post("/snow-runner?<profile>&<name>")]
+pub fn store_snow_runner_profile(
+    profile: Option<String>,
+    name: Option<String>,
+) -> Result<(), JsonValue> {
+    if profile.is_none() {
+        return Err(json!((Status::BadRequest, "Missing profile parameter")));
+    }
+    if name.is_none() {
+        return Err(json!((Status::BadRequest, "Missing name parameter")));
+    }
+    let mut profile = match SnowRunnerSave::get_snowrunner_profile(&profile.unwrap()) {
+        Ok(p) => p,
+        Err(e) => {
+            return Err(json!((Status::InternalServerError, e.to_string())));
+        }
+    };
+    match profile.archive_savegame(&name.unwrap()) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(json!((Status::InternalServerError, e.to_string()))),
+    }
+}
+
 #[get("/settings")]
 pub fn settings() -> Result<Json<Settings>, Status> {
     match SETTINGS.lock() {
