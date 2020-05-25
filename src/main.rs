@@ -6,6 +6,7 @@ extern crate rocket_contrib;
 extern crate serde;
 #[macro_use]
 extern crate lazy_static;
+extern crate dirs;
 
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
