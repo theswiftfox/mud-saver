@@ -8,7 +8,8 @@ use zip::ZipWriter;
 
 use crate::error::AppError;
 
-const PROFILE_PATH: &'static str = "\\My Games\\SnowRunner\\base\\storage";
+const SNOWRUNNER_DATA_DIR: &'static str = "My Games\\SnowRunner\\";
+const PROFILE_PATH: &'static str = "base\\storage";
 const SAVEGAME_FILE_EXT: &'static str = "dat";
 const DATA_FOLDER: &'static str = "sr-data";
 
@@ -40,7 +41,7 @@ impl SnowRunnerSave {
             Err(e) => {
                 dbg!(&path);
                 return Err(AppError::SnowRunnerProfileDirMissing(e.to_string()));
-            },
+            }
         };
 
         let mut profile_dirs: Vec<DirEntry> = Vec::new();
