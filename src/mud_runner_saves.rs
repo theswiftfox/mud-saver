@@ -6,7 +6,7 @@ use std::time::SystemTime;
 
 use crate::error::AppError;
 
-const PROFILE_PATH: &'static str = "SpinTires MudRunner\\UserSaves";
+const DATA_PATH: &'static str = "SpinTires MudRunner\\UserSaves";
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct MudrunnerSave {
@@ -79,6 +79,6 @@ fn get_mudrunner_data_dir () -> Result<PathBuf, AppError> {
         Some(d) => d,
         None => return Err(AppError::HomeDirNotFound(String::from("")))
     };
-    path.push(PROFILE_PATH);
+    path.push(DATA_PATH);
     Ok(path)
 }
