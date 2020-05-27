@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use std::path::PathBuf;
+use std::fs::{read_dir, DirEntry, File, metadata};
+use std::time::SystemTime;
 
 use crate::error::AppError;
 
@@ -9,7 +11,7 @@ const PROFILE_PATH: &'static str = "SpinTires MudRunner\\UserSaves";
 #[derive(Debug, Deserialize, Serialize)]
 pub struct MudrunnerSave {
     user_name: String,
-    file_hash: u64,
+    timestamp: SystemTime,
     original_name: String,
 }
 
