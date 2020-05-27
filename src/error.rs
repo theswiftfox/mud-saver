@@ -7,6 +7,7 @@ pub enum AppError {
     SRnoProfileFound(String),
     HomeDirNotFound(String),
     MudrunnerProfileDirMissing,
+    MudrunnerArchiveDirMissing,
     Unimplemented,
 }
 
@@ -19,7 +20,8 @@ impl Display for AppError {
                 write!(f, "Home directory could not be found: {}", what)
             }
             AppError::Unimplemented => write!(f, "Method not implemented"),
-            AppError::MudrunnerProfileDirMissing => write!(f, "Directory of Mudrunner savegames missing or corrupted")
+            AppError::MudrunnerProfileDirMissing => write!(f, "Directory of Mudrunner savegames missing or corrupted"),
+            AppError::MudrunnerArchiveDirMissing => write!(f, "Directory of archived Mudrunner savegames missing or corrupted")
         }
     }
 }
