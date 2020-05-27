@@ -23,7 +23,44 @@ impl MudrunnerSave {
 
     // function to get a vector of the mudrunner savegames' file names in Mudrunner's storage
     pub fn get_available_mudrunner_saves() -> Result<Vec<MudrunnerSave> , AppError> {
-        Err(AppError::SettingsNotFound(String::from("")))
+        let path = get_mudrunner_data_dir()?;
+        let dir_listing = match read_dir(&path) {
+            Ok(d) => d,
+            Err(_) => return Err(AppError::MudrunnerProfileDirMissing),
+        };
+
+        let mut savegamevec :Vec<MudrunnerSave> = Vec::new();
+        for entry in dir_listing {
+            let mut savegame = MudrunnerSave {
+                user_name: String::from(""),
+                original_name: String::from(""),
+                timestamp: SystemTime::now(),
+            };
+
+            match entry {
+                Ok(e) => {
+                    if let Some(filename) = e.file_name().to_str() {
+                        savegame.original_name = String::from(filename);
+                    } else {
+                        continue;
+                    }
+
+                    if let Ok(time) = e.metadata().unwrap().modified() {
+                        savegame.timestamp = time;
+                    } else {
+                        continue;
+                    }
+                }
+                Err(err) => {
+                    dbg!(err);
+                    continue;
+                }
+            }
+
+            savegamevec.push(savegame);
+        }
+
+        Ok(savegamevec)
     }
 
     // function to archive a specific savegame to our app's storage
