@@ -8,7 +8,6 @@ use std::path::PathBuf;
 use crate::error::AppError;
 
 const PROFILE_PATH: &'static str = "My Games\\SnowRunner\\base\\storage";
-const SAVEGAME_FILE_EXT: &'static str = "dat";
 const DATA_FOLDER: &'static str = "sr-data";
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -145,13 +144,25 @@ impl SnowRunnerProfile {
     pub fn archive_savegame(&mut self, name: &str) -> Result<(), AppError> {
         let mut path = get_snowrunner_profile_dir()?;
         path.push(&self.uuid);
-        let files_to_store = match read_dir(path) {
+        let files_to_store = match read_dir(&path) {
             Ok(files) => files,
             Err(e) => {
                 dbg!(e);
                 return Err(AppError::FileReadError(String::new()));
             }
         };
+        let dir_empty = || -> bool {
+            match path.read_dir() {
+                Ok(mut d) => d.next().is_none(),
+                Err(_) => false,
+            }
+        };
+
+        if dir_empty() {
+            return Err(AppError::SnowRunnerNoProfile(String::from(
+                "No save data found",
+            )));
+        }
         let uuid = uuid::Uuid::new_v4();
         let archive_name = format!("{}.zip", uuid);
         let mut target = get_snowrunner_data_dir()?;
@@ -173,6 +184,9 @@ impl SnowRunnerProfile {
 
             for entry in files_to_store {
                 if let Ok(f) = entry {
+                    if f.path().is_dir() {
+                        continue;
+                    }
                     let name_osstr = f.file_name();
                     let name = name_osstr.to_str();
                     if name.is_none() {
@@ -220,24 +234,31 @@ impl SnowRunnerProfile {
         Ok(())
     }
 
-    pub fn delete_archived_savegame(&mut self, uuid: &str) -> Result<(), AppError> {
+    fn get_save(&self, uuid: &str) -> Result<SavedProfile, AppError> {
+        match self
+            .meta_data
+            .stored_profiles
+            .iter()
+            .find(|&sp| sp.uuid.eq(uuid))
+        {
+            Some(s) => Ok(s.clone()),
+            None => Err(AppError::SavegameNotFound(String::from(uuid))),
+        }
+    }
+
+    pub fn delete_archived_savegame(&mut self, save_uuid: &str) -> Result<(), AppError> {
         let delete_save = || -> Result<(), AppError> {
-            let save = self
-                .meta_data
-                .stored_profiles
-                .iter()
-                .find(|&sp| sp.uuid.eq(uuid));
-            if save.is_none() {
-                return Err(AppError::SavegameNotFound(String::from(uuid)));
-            }
-            match std::fs::remove_file(&save.unwrap().file_path) {
+            let save = self.get_save(save_uuid)?;
+            match std::fs::remove_file(&save.file_path) {
                 Ok(_) => Ok(()),
                 Err(_) => Err(AppError::FileWriteError(String::from("Delete failed"))),
             }
         };
         match delete_save() {
             Ok(_) => {
-                self.meta_data.stored_profiles.retain(|sp| sp.uuid.ne(uuid));
+                self.meta_data
+                    .stored_profiles
+                    .retain(|sp| sp.uuid.ne(save_uuid));
                 self.meta_data.store(&self.uuid)?;
                 Ok(())
             }
@@ -245,8 +266,85 @@ impl SnowRunnerProfile {
         }
     }
 
-    pub fn restore_backup(&self, save_uuid: &str) -> Result<(), AppError> {
-        Err(AppError::Unimplemented(String::from("restore_backup")))
+    pub fn restore_backup(&mut self, save_uuid: &str) -> Result<(), AppError> {
+        let save = self.get_save(save_uuid)?;
+        let mut target_dir = get_snowrunner_profile_dir()?;
+        target_dir.push(&self.uuid);
+        let zipfile = match File::open(&save.file_path) {
+            Ok(f) => f,
+            Err(e) => {
+                dbg!(e);
+                return Err(AppError::FileReadError(String::from(
+                    save.file_path.to_str().unwrap_or("Backup"),
+                )));
+            }
+        };
+        let mut zip = match zip::ZipArchive::new(BufReader::new(zipfile)) {
+            Ok(z) => z,
+            Err(e) => {
+                dbg!(e);
+                return Err(AppError::FileReadError(String::from(
+                    save.file_path.to_str().unwrap_or("Backup"),
+                )));
+            }
+        };
+        let cleanup = || -> std::io::Result<Box<dyn std::any::Any>> {
+            let files = target_dir.read_dir()?;
+            for file_it in files {
+                if let Ok(file) = file_it {
+                    if file.path().is_dir() {
+                        continue;
+                    }
+                    std::fs::remove_file(file.path())?;
+                }
+            }
+            Ok(Box::new(()))
+        };
+        match cleanup() {
+            Ok(_) => (),
+            Err(e) => {
+                dbg!("Unable to remove some files: ", e);
+                ()
+            }
+        };
+        let mut restored_count = 0usize;
+        for i in 0..zip.len() {
+            let mut file = match zip.by_index(i) {
+                Ok(f) => f,
+                Err(e) => {
+                    dbg!(e);
+                    continue;
+                }
+            };
+            let mut target_file_path = target_dir.clone();
+            target_file_path.push(file.name());
+            let copy = || -> std::io::Result<()> {
+                let mut target_file = File::create(target_file_path)?;
+                let mut buf = Vec::new();
+                file.read_to_end(&mut buf)?;
+                target_file.write_all(&mut buf)?;
+
+                Ok(())
+            };
+            match copy() {
+                Ok(_) => {
+                    restored_count = restored_count + 1;
+                    ()
+                }
+                Err(e) => {
+                    dbg!(e);
+                    continue;
+                }
+            }
+        }
+        if restored_count == zip.len() {
+            self.modified = save.saved_on;
+            Ok(())
+        } else {
+            Err(AppError::ProfileRestoreFailed(String::from(
+                "Not all saved files could be restored",
+            )))
+        }
     }
 
     fn store_metadata(&self) -> Result<(), AppError> {
@@ -312,23 +410,23 @@ fn try_load_metadata(profile: &str) -> SnowRunnerMetaData {
 }
 
 fn is_profile_dir(dir: &DirEntry) -> bool {
-    if dir.path().is_dir() && dir.file_name().len() == 32 {
-        let files = match read_dir(dir.path()) {
-            Ok(f) => f,
-            Err(e) => {
-                dbg!(e);
-                return false;
-            }
-        };
-        for file in files {
-            if let Ok(file) = file {
-                if file.path().is_file() {
-                    if let Some(ext) = file.path().extension() {
-                        return ext.eq(SAVEGAME_FILE_EXT);
-                    }
-                }
-            }
-        }
-    }
-    return false;
+    dir.path().is_dir() && dir.file_name().len() == 32
+    // let files = match read_dir(dir.path()) {
+    //     Ok(f) => f,
+    //     Err(e) => {
+    //         dbg!(e);
+    //         return false;
+    //     }
+    // };
+    // for file in files {
+    //     if let Ok(file) = file {
+    //         if file.path().is_file() {
+    //             if let Some(ext) = file.path().extension() {
+    //                 return ext.eq(SAVEGAME_FILE_EXT);
+    //             }
+    //         }
+    //     }
+    // }
+    // }
+    // return false;
 }

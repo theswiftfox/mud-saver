@@ -72,6 +72,21 @@ pub fn delete_snow_runner_save(
     profile.delete_archived_savegame(&savegame.unwrap())
 }
 
+#[put("/snow-runner/profile?<id>&<savegame>")]
+pub fn restore_snow_runner_save(
+    id: Option<String>,
+    savegame: Option<String>,
+) -> Result<(), AppError> {
+    if id.is_none() {
+        return Err(AppError::MissingParameter(String::from("id")));
+    }
+    if savegame.is_none() {
+        return Err(AppError::MissingParameter(String::from("savegame")));
+    }
+    let mut profile = SnowRunnerProfile::get_snowrunner_profile(&id.unwrap())?;
+    profile.restore_backup(&savegame.unwrap())
+}
+
 #[get("/settings")]
 pub fn settings() -> Result<Json<Settings>, Status> {
     match SETTINGS.lock() {
