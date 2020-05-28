@@ -19,6 +19,7 @@ pub enum AppError {
     Unimplemented(String),
     MissingParameter(String),
     SavegameNotFound(String),
+    ProfileRestoreFailed(String),
 }
 
 impl Error for AppError {
@@ -35,6 +36,7 @@ impl Error for AppError {
             AppError::Unimplemented(what) => what,
             AppError::MissingParameter(what) => what,
             AppError::SavegameNotFound(what) => what,
+            AppError::ProfileRestoreFailed(what) => what,
         }
     }
 }
@@ -54,6 +56,7 @@ impl<'r> Responder<'r> for AppError {
             AppError::Unimplemented(_) => Status::Forbidden,
             AppError::MissingParameter(_) => Status::BadRequest,
             AppError::SavegameNotFound(_) => Status::BadRequest,
+            AppError::ProfileRestoreFailed(_) => Status::InternalServerError,
         };
         Response::build()
             .sized_body(Cursor::new(msg.to_string()))
@@ -81,6 +84,7 @@ impl Display for AppError {
             AppError::Unimplemented(_) => write!(f, "Method not implemented"),
             AppError::MissingParameter(what) => write!(f, "Missing parameter {}!", what),
             AppError::SavegameNotFound(what) => write!(f, "Savegame not found: {}", what),
+            AppError::ProfileRestoreFailed(what) => write!(f, "Profile restore failed: {}", what),
         }
     }
 }
