@@ -3,7 +3,8 @@ use rocket_contrib::json::{Json, JsonValue};
 use rocket_contrib::templates::Template;
 
 use crate::appconfig::Settings;
-use crate::snowrunner::SnowRunnerSave;
+use crate::error::AppError;
+use crate::snowrunner::SnowRunnerProfile;
 use crate::SETTINGS;
 
 #[get("/")]
@@ -24,36 +25,51 @@ pub fn overview() -> Result<Template, Status> {
 pub fn mud_runner() -> Result<Template, Status> {
     Ok(Template::render("mudrunner", ()))
 }
+
+/* *** SNOW RUNNER *** */
 #[get("/snow-runner")]
 pub fn snow_runner() -> Result<Template, JsonValue> {
-    let profiles = match SnowRunnerSave::get_available_snowrunner_saves() {
+    let profiles = match SnowRunnerProfile::get_available_snowrunner_profiles() {
         Ok(p) => p,
         Err(e) => return Err(json!(e)),
     };
     Ok(Template::render("snowrunner", profiles))
 }
 
-#[post("/snow-runner?<profile>&<name>")]
-pub fn store_snow_runner_profile(
-    profile: Option<String>,
-    name: Option<String>,
-) -> Result<(), JsonValue> {
-    if profile.is_none() {
-        return Err(json!((Status::BadRequest, "Missing profile parameter")));
+#[get("/snow-runner/profile?<id>")]
+pub fn get_snowrunner_profile(id: Option<String>) -> Result<Template, AppError> {
+    if id.is_none() {
+        return Err(AppError::MissingParameter(String::from("id")));
+    }
+    let profile = SnowRunnerProfile::get_snowrunner_profile(&id.unwrap())?;
+    let saves = profile.get_archived_snowrunner_saves();
+    Ok(Template::render("snowrunner-saves", saves))
+}
+
+#[post("/snow-runner/profile?<id>&<name>")]
+pub fn store_snow_runner_profile(id: Option<String>, name: Option<String>) -> Result<(), AppError> {
+    if id.is_none() {
+        return Err(AppError::MissingParameter(String::from("id")));
     }
     if name.is_none() {
-        return Err(json!((Status::BadRequest, "Missing name parameter")));
+        return Err(AppError::MissingParameter(String::from("name")));
     }
-    let mut profile = match SnowRunnerSave::get_snowrunner_profile(&profile.unwrap()) {
-        Ok(p) => p,
-        Err(e) => {
-            return Err(json!((Status::InternalServerError, e.to_string())));
-        }
-    };
-    match profile.archive_savegame(&name.unwrap()) {
-        Ok(_) => Ok(()),
-        Err(e) => Err(json!((Status::InternalServerError, e.to_string()))),
+    let mut profile = SnowRunnerProfile::get_snowrunner_profile(&id.unwrap())?;
+    profile.archive_savegame(&name.unwrap())
+}
+#[delete("/snow-runner/profile?<id>&<savegame>")]
+pub fn delete_snow_runner_save(
+    id: Option<String>,
+    savegame: Option<String>,
+) -> Result<(), AppError> {
+    if id.is_none() {
+        return Err(AppError::MissingParameter(String::from("id")));
     }
+    if savegame.is_none() {
+        return Err(AppError::MissingParameter(String::from("savegame")));
+    }
+    let mut profile = SnowRunnerProfile::get_snowrunner_profile(&id.unwrap())?;
+    profile.delete_archived_savegame(&savegame.unwrap())
 }
 
 #[get("/settings")]
