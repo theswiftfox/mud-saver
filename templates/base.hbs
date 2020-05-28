@@ -228,6 +228,8 @@
                         alert('Backup Succesful');
                         close_snowrunner_modal();
                         load_saves(profile);
+                    } else {
+                        alert(http.responseText);
                     }
                 }
             }
@@ -242,6 +244,29 @@
                     if (this.status == 200) {
                         alert('Delete Succesful');
                         load_saves(selected_snowrunner_profile);
+                    } else {
+                        alert(http.responseText);
+                    }
+                }
+            }
+        }
+
+        function restore_snowrunner(save_uuid) {
+            var http = new XMLHttpRequest();
+            http.open('PUT', '/snow-runner/profile?id=' + selected_snowrunner_profile + '&savegame=' + save_uuid);
+            http.send();
+            http.onreadystatechange = function () {
+                if (http.readyState == 4) {
+                    if (this.status == 200) {
+                        alert('Restore Succesful');
+                        var show_buttons = true;
+                        if (settings.enable_mudrunner && settings.enable_snowrunner) {
+                            show_buttons = false;
+                        }
+                        load_subpage('/snow-runner', show_buttons, show_buttons);
+                        load_saves(selected_snowrunner_profile);
+                    } else {
+                        alert(http.responseText);
                     }
                 }
             }

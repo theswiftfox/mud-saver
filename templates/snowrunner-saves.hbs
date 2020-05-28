@@ -9,7 +9,8 @@
                 <span>{{date-time date=this.saved_on}}</span>
             </div>
             <div class="w3-bar-item w3-right">
-                <button class="w3-button w3-theme" style="width: 90px;">Restore</button>
+                <button class="w3-button w3-theme" style="width: 90px;"
+                    onclick="restore_snowrunner('{{this.uuid}}')">Restore</button>
                 <button class="w3-button w3-red" style="width: 50px;"
                     onclick="delete_snowrunner('{{this.uuid}}')">&times;</button>
             </div>
