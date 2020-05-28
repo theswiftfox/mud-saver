@@ -245,6 +245,10 @@ impl SnowRunnerProfile {
         }
     }
 
+    pub fn restore_backup(&self, save_uuid: &str) -> Result<(), AppError> {
+        Err(AppError::Unimplemented(String::from("restore_backup")))
+    }
+
     fn store_metadata(&self) -> Result<(), AppError> {
         self.meta_data.store(&self.uuid)
     }
