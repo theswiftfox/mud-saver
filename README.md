@@ -27,3 +27,9 @@ or in release mode
 ```
 cargo run --release -- --with-ui
 ```
+
+> Native UI currently needs a workaround on Windows 10 as described in the web-view readme to allow the edge backend to call a local hosted endpoint:  
+```
+# requires admin privileges
+CheckNetIsolation.exe LoopbackExempt -a -n="Microsoft.Win32WebViewHost_cw5n1h2txyewy"
+```
