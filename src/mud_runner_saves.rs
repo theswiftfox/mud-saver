@@ -16,7 +16,7 @@ pub struct MudrunnerSave {
 }
 
 impl MudrunnerSave {
-// unction to get a vector of the mudrunner savegames' titles/user names in our app's storage
+// function to get a vector of the mudrunner savegames' titles/user names in our app's storage
     pub fn get_archived_mudrunner_saves() -> Result<Vec<MudrunnerSave> , AppError> {
         Err(AppError::SettingsNotFound(String::from("")))
     }
