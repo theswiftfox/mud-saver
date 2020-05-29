@@ -82,3 +82,13 @@ fn get_mudrunner_data_dir () -> Result<PathBuf, AppError> {
     path.push(DATA_PATH);
     Ok(path)
 }
+
+fn get_mudrunner_profile_dir() -> Result<PathBuf, AppError> {
+    let mut path = match dirs::document_dir() {
+        Some(d) => d,
+        None => return Err(AppError::HomeDirNotFound(String::from(""))),
+    };
+    dbg!(&path);
+    path.push(PROFILE_PATH);
+    Ok(path)
+}
