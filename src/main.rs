@@ -12,7 +12,7 @@ extern crate serde;
 extern crate uuid;
 extern crate zip;
 
-use chrono::{offset::Utc, DateTime};
+use chrono::{offset::{Local, Utc}, DateTime};
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::{
     handlebars::{Context, Handlebars, Helper, HelperResult, Output, RenderContext, RenderError},
@@ -49,6 +49,7 @@ fn start_rocket() {
         .mount(
             "/",
             routes![
+                pages::exit,
                 pages::index,
                 pages::overview,
                 pages::mud_runner,
@@ -78,7 +79,8 @@ fn start_rocket() {
                             if let Ok(date) =
                                 serde_json::from_value::<DateTime<Utc>>(date_js.clone())
                             {
-                                let local_date = date.naive_local();
+                                let local = DateTime::<Local>::from(date);
+                                let local_date = local.naive_local();
                                 let date_str = format!(
                                     "{} - {}",
                                     local_date.date(),
@@ -124,6 +126,16 @@ fn start_headless() {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
+    let data_dir = get_app_data_dir().unwrap();
+    if !data_dir.exists() {
+        match std::fs::create_dir(&data_dir) {
+            Ok(_) => (),
+            Err(e) => {
+                dbg!(&data_dir, &e);
+                panic!(error::AppError::FileWriteError(String::from("Unable to create data directory for backups.")));
+            }
+        }
+    }
     if args.len() > 1 {
         if &args[1] == "--with-ui" {
             start_with_ui()

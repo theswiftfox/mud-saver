@@ -7,6 +7,11 @@ use crate::error::AppError;
 use crate::snowrunner::SnowRunnerProfile;
 use crate::SETTINGS;
 
+#[post("/exit")]
+pub fn exit() -> Result<(), AppError> {
+    std::process::exit(0);
+}
+
 #[get("/")]
 pub fn index() -> Result<Template, Status> {
     let color = match SETTINGS.lock() {
