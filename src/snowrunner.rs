@@ -163,12 +163,24 @@ impl SnowRunnerProfile {
                 "No save data found",
             )));
         }
+
+        // check if appdata dir exists, else create
+        let mut data_dir = get_snowrunner_data_dir()?;
+        if !data_dir.exists() {
+            match std::fs::create_dir(&data_dir) {
+                Ok(_) => (),
+                Err(e) => {
+                    dbg!(&data_dir, &e);
+                    return Err(AppError::FileWriteError(String::from("Unable to create data directory for backups.")));
+                }
+            }
+        }
+
         let uuid = uuid::Uuid::new_v4();
         let archive_name = format!("{}.zip", uuid);
-        let mut target = get_snowrunner_data_dir()?;
-        target.push(&archive_name);
+        data_dir.push(&archive_name);
 
-        let file = match File::create(&target) {
+        let file = match File::create(&data_dir) {
             Ok(f) => f,
             Err(e) => {
                 dbg!(&e);
@@ -223,7 +235,7 @@ impl SnowRunnerProfile {
         let saved_profile = SavedProfile {
             name: String::from(name),
             saved_on: Utc::now(),
-            file_path: target,
+            file_path: data_dir,
             uuid: uuid.to_simple().to_string(),
         };
         self.meta_data.stored_profiles.push(saved_profile);

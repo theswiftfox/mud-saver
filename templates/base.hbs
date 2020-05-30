@@ -22,6 +22,7 @@
         <div class="w3-bar-item w3-button" onclick="load_settings(true)">Settings</div>
         <a href="https://github.com/theswiftfox/mud-saver/issues" target="_blank" class="w3-bar-item w3-button">Report
             Issue</a>
+        <div class="w3-bar-item w3-button" onclick="exit()">Exit</div>
         <div class="w3-panel w3-display-bottomleft">Version: 1.0.0</div>
     </div>
     <!-- Topbar -->
@@ -135,6 +136,19 @@
                 } else {
                     width++;
                     bar.style.width = width + '%';
+                }
+            }
+        }
+
+        function exit() {
+            var http = new XMLHttpRequest();
+            http.open('POST', '/exit');
+            http.send();
+            http.onerror = function (err) {
+                if (err) {
+                    if (confirm("Close Window?")) {
+                        close();
+                    }
                 }
             }
         }
