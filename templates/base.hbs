@@ -146,9 +146,7 @@
             http.send();
             http.onerror = function (err) {
                 if (err) {
-                    if (confirm("Close Window?")) {
-                        close();
-                    }
+                    // todo: some "you can close this window now info"
                 }
             }
         }
