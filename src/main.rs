@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "embed_ui", windows_subsystem = "windows")]
 #![feature(proc_macro_hygiene, decl_macro)]
 
 #[macro_use]
@@ -7,10 +8,17 @@ extern crate serde;
 #[macro_use]
 extern crate lazy_static;
 
+use chrono::{
+    offset::{Local, Utc},
+    DateTime,
+};
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
 
+#[cfg(feature = "embed_ui")]
 use std::thread;
+use std::sync::Mutex;
+
 use std::sync::Mutex;
 
 mod appconfig;
@@ -39,6 +47,7 @@ fn start_rocket() {
         .launch();
 }
 
+#[cfg(feature = "embed_ui")]
 fn start_ui() {
     let res = (1000, 600);
     web_view::builder()
@@ -53,29 +62,17 @@ fn start_ui() {
         .unwrap();
 }
 
-fn start_with_ui() {
-    let _ = thread::spawn(|| {
-        start_rocket()
-    });
+#[cfg(feature = "embed_ui")]
+fn main() {
+    let _ = thread::spawn(|| start_rocket());
     thread::sleep(std::time::Duration::from_secs(1));
     start_ui();
 
     std::process::exit(0);
 }
 
-fn start_headless() {
-    start_rocket();
-}
 
+#[cfg(not(feature = "embed_ui"))]
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() > 1 {
-        if &args[1] == "--with-ui" {
-            start_with_ui()
-        } else {
-            println!("argument not recognized")
-        }
-    } else {
-        start_headless()
-    }
+    start_rocket();
 }
