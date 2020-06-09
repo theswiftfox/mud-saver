@@ -17,7 +17,6 @@ use rocket_contrib::templates::Template;
 
 #[cfg(feature = "embed_ui")]
 use std::thread;
-use std::sync::Mutex;
 
 use std::sync::Mutex;
 
