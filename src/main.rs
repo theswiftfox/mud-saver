@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "embed_ui", windows_subsystem = "windows")]
 #![feature(proc_macro_hygiene, decl_macro)]
 
 extern crate chrono;
@@ -12,15 +13,20 @@ extern crate serde;
 extern crate uuid;
 extern crate zip;
 
-use chrono::{offset::{Local, Utc}, DateTime};
+use chrono::{
+    offset::{Local, Utc},
+    DateTime,
+};
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::{
     handlebars::{Context, Handlebars, Helper, HelperResult, Output, RenderContext, RenderError},
     Template,
 };
 
-use std::sync::Mutex;
+#[cfg(feature = "embed_ui")]
 use std::thread;
+
+use std::sync::Mutex;
 
 mod appconfig;
 mod error;
@@ -98,6 +104,7 @@ fn start_rocket() {
         .launch();
 }
 
+#[cfg(feature = "embed_ui")]
 fn start_ui() {
     let res = (1000, 600);
     web_view::builder()
@@ -112,7 +119,8 @@ fn start_ui() {
         .unwrap();
 }
 
-fn start_with_ui() {
+#[cfg(feature = "embed_ui")]
+fn main() {
     let _ = thread::spawn(|| start_rocket());
     thread::sleep(std::time::Duration::from_secs(1));
     start_ui();
@@ -120,29 +128,8 @@ fn start_with_ui() {
     std::process::exit(0);
 }
 
-fn start_headless() {
-    start_rocket();
-}
 
+#[cfg(not(feature = "embed_ui"))]
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    let data_dir = get_app_data_dir().unwrap();
-    if !data_dir.exists() {
-        match std::fs::create_dir(&data_dir) {
-            Ok(_) => (),
-            Err(e) => {
-                dbg!(&data_dir, &e);
-                panic!(error::AppError::FileWriteError(String::from("Unable to create data directory for backups.")));
-            }
-        }
-    }
-    if args.len() > 1 {
-        if &args[1] == "--with-ui" {
-            start_with_ui()
-        } else {
-            println!("argument not recognized")
-        }
-    } else {
-        start_headless()
-    }
+    start_rocket();
 }
