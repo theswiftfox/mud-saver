@@ -14,14 +14,15 @@
     <script src="/static/w3.js"></script>
 </head>
 
-<body onload="load_subpage('/overview', false)">
+<body onload="init()">
     <!-- Sidebar -->
     <div class="w3-sidebar w3-display-container w3-bar-block w3-card w3-animate-right" style="display:none;right:0"
         id="side">
         <button onclick="w3_close()" class="w3-bar-item w3-theme-action w3-button w3-large">Close &times;</button>
-        <div class="w3-bar-item w3-button" onclick="load_settings()">Settings</div>
+        <div class="w3-bar-item w3-button" onclick="load_settings(true)">Settings</div>
         <a href="https://github.com/theswiftfox/mud-saver/issues" target="_blank" class="w3-bar-item w3-button">Report
             Issue</a>
+        <div class="w3-bar-item w3-button" onclick="exit()">Exit</div>
         <div class="w3-panel w3-display-bottomleft">Version: 1.0.0</div>
     </div>
     <!-- Topbar -->
@@ -38,9 +39,12 @@
             <h1>MudRunner</h1>
             Backup or load savegame
         </div>
-        <button id="menuBtn" class="w3-button w3-theme w3-xlarge w3-display-right" onclick="w3_open()">☰</button>
+        <button id="menuBtn" class="w3-button w3-theme w3-xlarge w3-display-right" onclick="w3_open()">&#x2630;</button>
         <button id="homeBtn" class="w3-button w3-theme w3-xlarge w3-display-left" style="display: none;"
-            onclick="load_subpage('/overview')">ᐸ</button>
+            onclick="load_subpage('/overview')">&#5176;</button>
+    </div>
+    <div id="loading_bar_container" class="w3-light-grey">
+        <div id="loading_bar" class="w3-container w3-theme" style="height:24px;width:1%"></div>
     </div>
     <!-- Content -->
     <div id="main" class="w3-container">
@@ -61,21 +65,37 @@
                             <div class="w3-bar-item">Color Theme:</div>
                             <div class="w3-bar-item w3-right">
                                 <div class="w3-dropdown-hover">
-                                    <button id="selected-theme" class="w3-button" style="width: 150px;"></button>
+                                    <button id="selected_theme" class="w3-button" style="width: 150px;"></button>
                                     <div class="w3-dropdown-content w3-bar-block w3-border">
-                                        <a href="#" class="w3-bar-item w3-button w3-hover-teal" onclick="set_selected_theme('teal')">Teal</a>
-                                        <a href="#" class="w3-bar-item w3-button w3-hover-deep-orange" onclick="set_selected_theme('deep-orange')">Deep Orange</a>
-                                        <a href="#" class="w3-bar-item w3-button w3-hover-brown" onclick="set_selected_theme('brown')">Brown</a>
-                                        <a href="#" class="w3-bar-item w3-button w3-hover-black" onclick="set_selected_theme('black')">Black</a>
+                                        <a href="#" class="w3-bar-item w3-button w3-hover-teal"
+                                            onclick="set_selected_theme('teal')">Teal</a>
+                                        <a href="#" class="w3-bar-item w3-button w3-hover-deep-orange"
+                                            onclick="set_selected_theme('deep-orange')">Deep Orange</a>
+                                        <a href="#" class="w3-bar-item w3-button w3-hover-brown"
+                                            onclick="set_selected_theme('brown')">Brown</a>
+                                        <a href="#" class="w3-bar-item w3-button w3-hover-black"
+                                            onclick="set_selected_theme('black')">Black</a>
                                     </div>
                                 </div>
+                            </div>
+                        </li>
+                        <li class="w3-bar">
+                            <div class="w3-bar-item">Enable Mudrunner:</div>
+                            <div class="w3-bar-item w3-right">
+                                <input id="mr_enabled" class="w3-check" type="checkbox" onclick="toggle_mr()">
+                            </div>
+                        </li>
+                        <li class="w3-bar">
+                            <div class="w3-bar-item">Enable Snowrunner:</div>
+                            <div class="w3-bar-item w3-right">
+                                <input id="sr_enabled" class="w3-check" type="checkbox" onclick="toggle_sr()">
                             </div>
                         </li>
                     </ul>
                 </div>
                 <footer class="w3-container w3-light-gray">
                     <div class="w3-container">
-                        <button class="w3-right w3-button" onclick="save_settings()">Save</button>
+                        <button id="save_btn" class="w3-right w3-button" onclick="save_settings()">Save</button>
                     </div>
                 </footer>
             </div>
@@ -83,75 +103,226 @@
     </div>
 
     <script>
-        var settings;
+        var settings = null;
+        var selected_snowrunner_profile = null;
+        var save_snowrunner_profile = null;
+
+        function init() {
+            var http = new XMLHttpRequest();
+            http.open('GET', '/settings');
+            http.send();
+            http.onreadystatechange = function () {
+                if (http.readyState == 4 && this.status == 200) {
+                    w3.hide('#loading_bar_container');
+                    settings = JSON.parse(http.responseText);
+                    if ((settings.enable_snowrunner && settings.enable_mudrunner) ||
+                        (!settings.enable_mudrunner && !settings.enable_snowrunner)) {
+                        load_subpage('/overview');
+                    } else {
+                        if (settings.enable_mudrunner) {
+                            load_subpage('/mud-runner', true, true);
+                        } else {
+                            load_subpage('/snow-runner', true, true);
+                        }
+                    }
+                }
+            };
+            var bar = document.getElementById('loading_bar');
+            var width = 1;
+            var id = setInterval(frame, 10);
+            function frame() {
+                if (width >= 100) {
+                    clearInterval(id);
+                } else {
+                    width++;
+                    bar.style.width = width + '%';
+                }
+            }
+        }
+
+        function exit() {
+            var http = new XMLHttpRequest();
+            http.open('POST', '/exit');
+            http.send();
+            http.onerror = function (err) {
+                if (err) {
+                    // todo: some "you can close this window now info"
+                }
+            }
+        }
 
         function w3_open() {
-            document.getElementById("main").style.marginRight = "15%";
-            document.getElementById("side").style.width = "15%";
-            document.getElementById("side").style.display = "block";
-            document.getElementById("menuBtn").style.display = 'none';
+            document.getElementById('main').style.marginRight = '15%';
+            document.getElementById('side').style.width = '15%';
+            document.getElementById('side').style.display = 'block';
+            document.getElementById('menuBtn').style.display = 'none';
         }
 
         function w3_close() {
-            document.getElementById("main").style.marginRight = "0%";
-            document.getElementById("side").style.width = "0%";
-            document.getElementById("side").style.display = "none";
-            document.getElementById("menuBtn").style.display = 'inline-block';
+            document.getElementById('main').style.marginRight = '0%';
+            document.getElementById('side').style.width = '0%';
+            document.getElementById('side').style.display = 'none';
+            document.getElementById('menuBtn').style.display = 'inline-block';
         }
 
-        function load_subpage(target) {
+        function load_subpage(target, showSettings, hideHome) {
             var showBack = target.includes('mud-runner') || target.includes('snow-runner');
             if (!showBack) {
                 w3.hide('#homeBtn');
             }
-            var elem = document.getElementById("main");
+            var elem = document.getElementById('main');
             var xhttp = new XMLHttpRequest();
-            xhttp.open("GET", target);
+            xhttp.open('GET', target);
             xhttp.send();
             xhttp.onreadystatechange = function () {
                 if (xhttp.readyState == 4) {
                     if (this.status == 200) {
                         elem.innerHTML = xhttp.responseText;
                         if (showBack) {
-                            w3.show('#homeBtn');
-                            w3.hide("#overview-header");
-                            w3.hide("#menuBtn");
+                            if (!showSettings) {
+                                w3.hide('#menuBtn');
+                            }
+                            if (!hideHome) {
+                                w3.show('#homeBtn');
+                            }
+                            w3.hide('#overview-header');
+
                             if (target.includes('mud-runner')) {
-                                w3.show("#mudrunner-header");
+                                w3.show('#mudrunner-header');
                             } else {
-                                w3.show("#snowrunner-header");
+                                w3.show('#snowrunner-header');
                             }
                         } else {
-                            w3.hide("#snowrunner-header");
-                            w3.hide("#mudrunner-header");
-                            w3.show("#overview-header");
-                            w3.show("#menuBtn")
+                            w3.hide('#snowrunner-header');
+                            w3.hide('#mudrunner-header');
+                            w3.show('#overview-header');
+                            w3.show('#menuBtn')
                         }
                     }
-                    if (this.status == 404) { elem.innerHTML = "Error loading Subpage!"; }
+                    if (this.status == 404) {
+                        elem.innerHTML = 'Error loading Subpage!';
+                    }
                 }
             }
 
             return;
         }
 
-        function load_settings() {
-            var elem = document.getElementById('settings-modal');
+        function load_saves(uuid) {
+            if (selected_snowrunner_profile) {
+                w3.hide("[id='" + selected_snowrunner_profile + "']");
+            }
             var http = new XMLHttpRequest();
-            http.open("GET", '/settings');
+            http.open('GET', '/snow-runner/profile?id=' + uuid);
+            http.send();
+            http.onreadystatechange = function () {
+                if (http.readyState == 4) {
+                    if (this.status == 200) {
+                        document.getElementById('saves').innerHTML = http.responseText;
+                        selected_snowrunner_profile = uuid;
+                        w3.show("[id='" + selected_snowrunner_profile + "']");
+                    } else {
+                        console.warn(http.responseText);
+                    }
+                }
+            }
+        }
+
+        function backup_snowrunner() {
+            var profile = document.getElementById('snowrunner-save-modal').getAttribute('profile');
+            var name = document.getElementById('snowrunner-save-name').value;
+            var http = new XMLHttpRequest();
+            http.open('POST', '/snow-runner/profile?id=' + profile + '&name=' + name);
+            http.send();
+            http.onreadystatechange = function () {
+                if (http.readyState == 4) {
+                    if (this.status == 200) {
+                        alert('Backup Succesful');
+                        close_snowrunner_modal();
+                        load_saves(profile);
+                    } else {
+                        alert(http.responseText);
+                    }
+                }
+            }
+        }
+
+        function delete_snowrunner(save_uuid) {
+            var http = new XMLHttpRequest();
+            http.open('DELETE', '/snow-runner/profile?id=' + selected_snowrunner_profile + '&savegame=' + save_uuid);
+            http.send();
+            http.onreadystatechange = function () {
+                if (http.readyState == 4) {
+                    if (this.status == 200) {
+                        alert('Delete Succesful');
+                        load_saves(selected_snowrunner_profile);
+                    } else {
+                        alert(http.responseText);
+                    }
+                }
+            }
+        }
+
+        function restore_snowrunner(save_uuid) {
+            var http = new XMLHttpRequest();
+            http.open('PUT', '/snow-runner/profile?id=' + selected_snowrunner_profile + '&savegame=' + save_uuid);
+            http.send();
+            http.onreadystatechange = function () {
+                if (http.readyState == 4) {
+                    if (this.status == 200) {
+                        alert('Restore Succesful');
+                        var show_buttons = true;
+                        if (settings.enable_mudrunner && settings.enable_snowrunner) {
+                            show_buttons = false;
+                        }
+                        load_subpage('/snow-runner', show_buttons, show_buttons);
+                        load_saves(selected_snowrunner_profile);
+                    } else {
+                        alert(http.responseText);
+                    }
+                }
+            }
+        }
+
+        function open_snowrunner_modal(uuid) {
+            var modal = document.getElementById('snowrunner-save-modal');
+            modal.style.display = 'block';
+            modal.setAttribute('profile', uuid);
+        }
+
+        function close_snowrunner_modal() {
+            var modal = document.getElementById('snowrunner-save-modal');
+            modal.style.display = 'none';
+            modal.setAttribute('profile', null)
+            document.getElementById('snowrunner-save-name').value = null;
+        }
+
+        function load_settings(showModal) {
+            var http = new XMLHttpRequest();
+            http.open('GET', '/settings');
             http.send();
             http.onreadystatechange = function () {
                 if (http.readyState == 4 && this.status == 200) {
                     settings = JSON.parse(http.responseText);
-                    set_selected_theme(settings.color);
-                    elem.style.display='block';
+                    display_settings(settings);
+                    if (showModal) {
+                        document.getElementById('settings-modal').style.display = 'block';
+                        check_valid_settings();
+                    }
                 }
             };
         }
 
+        function display_settings(settings) {
+            set_selected_theme(settings.color);
+            document.getElementById('mr_enabled').checked = settings.enable_mudrunner;
+            document.getElementById('sr_enabled').checked = settings.enable_snowrunner;
+        }
+
+
         function set_selected_theme(theme) {
             settings.color = theme;
-            var elem = document.getElementById("selected-theme");
+            var elem = document.getElementById('selected_theme');
             var oldColor = elem.innerHTML;
             elem.innerHTML = theme;
             if (oldColor != '') {
@@ -160,10 +331,28 @@
             elem.classList.add('w3-' + theme);
         }
 
+        function check_valid_settings() {
+            var btn = document.getElementById('save_btn')
+            if (!(settings.enable_mudrunner || settings.enable_snowrunner)) {
+                btn.disabled = true;
+            } else {
+                btn.disabled = false;
+            }
+        }
+
+        function toggle_mr() {
+            settings.enable_mudrunner = !settings.enable_mudrunner;
+            check_valid_settings();
+        }
+        function toggle_sr() {
+            settings.enable_snowrunner = !settings.enable_snowrunner;
+            check_valid_settings();
+        }
+
         function save_settings() {
             var http = new XMLHttpRequest();
-            http.open("POST", '/settings');
-            http.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            http.open('POST', '/settings');
+            http.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
             http.send(JSON.stringify(settings));
             http.onreadystatechange = function () {
                 if (http.readyState == 4 && this.status == 200) {
