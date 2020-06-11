@@ -7,6 +7,7 @@ use std::time::SystemTime;
 use crate::error::AppError;
 
 const DATA_PATH: &'static str = "SpinTires MudRunner\\UserSaves";
+const PROFILE_PATH: &'static str = "mud-saver\\mudrunner";
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct MudrunnerSave {
