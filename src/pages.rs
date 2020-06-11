@@ -7,6 +7,11 @@ use crate::error::AppError;
 use crate::snowrunner::SnowRunnerProfile;
 use crate::SETTINGS;
 
+#[get("/check")]
+pub fn check() -> Result<(), AppError> {
+    Ok(())
+}
+
 #[post("/exit")]
 pub fn exit() -> Result<(), AppError> {
     std::process::exit(0);
