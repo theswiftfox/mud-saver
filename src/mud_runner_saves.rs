@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 use std::path::PathBuf;
-use std::fs::{read_dir, DirEntry, File, metadata};
+use std::fs::{read_dir, DirEntry, File, metadata, copy};
 use std::time::SystemTime;
+use std::io::BufReader;
 
 use crate::error::AppError;
 
@@ -65,8 +66,62 @@ impl MudrunnerSave {
     }
 
     // function to archive a specific savegame to our app's storage
-    pub fn archive_savegame(& self, savegame: &MudrunnerSave) -> Result<(), AppError> {
-        Err(AppError::SettingsNotFound(String::from("")))
+    pub fn archive_savegame(& self) -> Result<(), AppError> {
+        let mut path = get_mudrunner_profile_dir()?;
+        path.push("MudrunnerMetadata.json");
+        let json_file = File::open(path);
+
+        match json_file {
+            Ok(json_file) => {
+                let reader = BufReader::new(json_file);
+
+                let savegame_vec: Result<Vec<MudrunnerSave>, _> = serde_json::from_reader(reader);
+                match savegame_vec {
+                    Ok(mudrunnersave_vec) => {
+                        // first check if we have an element with the same "user_name", if yes we
+                        // take it out and later put the now one back in.
+                        // mudrunnersave_vec.retain(|&x| x.user_name != self.user_name);
+                        let mut new_save_vec: Vec<MudrunnerSave> = Vec::new();
+                        for entry in mudrunnersave_vec {
+                            if self.user_name != entry.user_name {
+                                new_save_vec.push(entry);
+                            }
+                        }
+
+                        // Push our "self" element to the vector
+                        new_save_vec.push(self.clone());
+
+                        // Copy the actual savegame from mudrunner
+                        let mut from: &str = "";
+                        let mut to: &str = "";
+
+                        if let Some(mut from) = get_mudrunner_data_dir()?.to_str() {
+                            from = format!("{}{}", from, self.original_name).as_str();
+                        } else {
+                            return Err(AppError::MudrunnerProfileDirMissing);
+                        }
+
+                        if let Some(mut to) = get_mudrunner_profile_dir()?.to_str() {
+                            to = format!("{}{}", to, self.original_name).as_str();
+                        } else {
+                            return Err(AppError::MudrunnerArchiveDirMissing);
+                        }
+
+                        copy(from, to);
+                    }
+                    Err(err) => {
+                        dbg!(err);
+                        return Err(AppError::MudrunnerArchiveDirMissing);
+                    }
+                }
+            }
+            Err(err) => {
+                dbg!(err);
+                return Err(AppError::MudrunnerArchiveDirMissing);
+            }
+        }
+
+        Ok(())
     }
 
     // function to install a specific savegame (overwriting the existing one)
