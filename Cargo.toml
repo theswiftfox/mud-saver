@@ -7,17 +7,19 @@ edition = "2018"
 [features]
 default = []
 
-embed_ui = ["web-view"]
+embed_ui = ["web-view", "winapi", "reqwest" ]
 
 [dependencies]
 chrono = { version = "0.4.11", features = ["serde"] }
 dirs = "2.0.2"
 lazy_static = "1.4.0"
+reqwest = { version = "0.9.3", optional = true }
 rocket = "0.4.4"
 serde = { version = "1.0.110", features = ["derive"] }
 serde_json = "1.0.53"
 uuid = { version = "0.8", features = ["v4"] }
-web-view = { version = "0.6.3", features = ["edge"], optional = true}
+web-view = { version = "0.6.3", features = ["edge"], optional = true }
+winapi = { version = "0.3.8", optional = true }
 zip = "0.5.5"
 
 [dependencies.rocket_contrib]

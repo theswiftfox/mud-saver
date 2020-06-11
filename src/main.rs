@@ -1,4 +1,7 @@
-#![cfg_attr(feature = "embed_ui", windows_subsystem = "windows")]
+#![cfg_attr(
+    all(feature = "embed_ui", not(debug_assertions)),
+    windows_subsystem = "windows"
+)]
 #![feature(proc_macro_hygiene, decl_macro)]
 
 extern crate chrono;
@@ -58,6 +61,7 @@ fn start_rocket() {
             routes![
                 pages::exit,
                 pages::index,
+                pages::check,
                 pages::overview,
                 pages::mud_runner,
                 pages::snow_runner,
@@ -106,6 +110,18 @@ fn start_rocket() {
 }
 
 #[cfg(feature = "embed_ui")]
+extern crate reqwest;
+
+#[cfg(feature = "embed_ui")]
+fn check_server_up() -> bool {
+    let request = match reqwest::get("http://localhost:8000/check") {
+        Ok(r) => r,
+        Err(_) => return false,
+    };
+    request.status() == reqwest::StatusCode::OK
+}
+
+#[cfg(feature = "embed_ui")]
 fn start_ui() {
     let res = (1000, 600);
     web_view::builder()
@@ -120,8 +136,11 @@ fn start_ui() {
         .unwrap();
 }
 
+#[cfg(all(feature = "embed_ui", target_os = "windows"))]
+extern crate winapi;
+
 #[cfg(feature = "embed_ui")]
-fn main() {
+fn main_ui() -> Result<(), ()> {
     #[cfg(target_os = "windows")]
     {
         use std::os::windows::process::CommandExt;
@@ -136,19 +155,63 @@ fn main() {
 
             let output_str = std::str::from_utf8(&output.stdout)?;
 
-            if !output_str.contains("Microsoft.Win32WebViewHost_cw5n1h2txyewy") {
-                let mut cmd = Command::new("cmd");
-                cmd.args(&[
-                    "/C",
-                    "CheckNetIsolation.exe",
-                    "LoopbackExempt",
-                    "-a",
-                    "-n=Microsoft.Win32WebViewHost_cw5n1h2txyewy",
-                ]);
-                cmd.creation_flags(CREATE_NO_WINDOW);
-                let res = cmd.output()?;
-                if !res.status.success() {
-                    return Err("Setting edge local allowed failed")?;
+            #[cfg(debug_assertions)]
+            println!("{}", output_str);
+
+            if !(output_str.contains("microsoft.Win32WebViewHost_cw5n1h2txyewy")
+                || (output_str.contains("microsoft.win32webviewhost_cw5n1h2txyewy")))
+            {
+                use winapi::ctypes::c_int;
+                use winapi::shared::minwindef::HINSTANCE;
+                use winapi::shared::ntdef::LPCWSTR;
+                use winapi::shared::windef::HWND;
+                extern "system" {
+                    pub fn ShellExecuteW(
+                        hwnd: HWND,
+                        lpOperation: LPCWSTR,
+                        lpFile: LPCWSTR,
+                        lpParameters: LPCWSTR,
+                        lpDirectory: LPCWSTR,
+                        nShowCmd: c_int,
+                    ) -> HINSTANCE;
+                }
+                const SW_SHOW: c_int = 1;
+
+                use std::os::windows::prelude::*;
+                let path: Vec<u16> = std::ffi::OsStr::new("CheckNetIsolation.exe")
+                    .encode_wide()
+                    .chain(Some(0).into_iter())
+                    .collect();
+                let operation: Vec<u16> = std::ffi::OsStr::new("runas")
+                    .encode_wide()
+                    .chain(Some(0).into_iter())
+                    .collect();
+                let parameters: Vec<u16> = std::ffi::OsStr::new(
+                    "LoopbackExempt -a -n=Microsoft.Win32WebViewHost_cw5n1h2txyewy",
+                )
+                .encode_wide()
+                .chain(Some(0).into_iter())
+                .collect();
+
+                let result = unsafe {
+                    ShellExecuteW(
+                        std::ptr::null_mut(),
+                        operation.as_ptr(),
+                        path.as_ptr(),
+                        parameters.as_ptr(),
+                        std::ptr::null(),
+                        SW_SHOW,
+                    )
+                };
+                if result != std::ptr::null_mut() {
+                    unsafe {
+                        winapi::um::synchapi::WaitForSingleObject(
+                            result as *mut _,
+                            winapi::um::winbase::INFINITE,
+                        );
+                    }
+                } else {
+                    panic!("Error on init!");
                 }
             }
 
@@ -158,10 +221,31 @@ fn main() {
         edge_check().expect("Error starting application..");
     }
     let _ = thread::spawn(|| start_rocket());
-    thread::sleep(std::time::Duration::from_secs(1));
+    let mut ok = false;
+    for _ in 0..10 {
+        ok = check_server_up();
+        if ok {
+            break;
+        }
+        thread::sleep(std::time::Duration::from_secs(1));
+    }
+    if !ok {
+        return Err(());
+    }
     start_ui();
 
-    std::process::exit(0);
+    Ok(())
+}
+
+#[cfg(feature = "embed_ui")]
+fn main() {
+    std::process::exit(match main_ui() {
+        Ok(_) => 0,
+        Err(_) => {
+            eprintln!("Error while running application.");
+            1
+        }
+    });
 }
 
 #[cfg(not(feature = "embed_ui"))]
