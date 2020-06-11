@@ -40,8 +40,13 @@ jobs:
       run: rustup update ${{ matrix.rust }} --no-self-update && rustup default ${{ matrix.rust }}
       shell: bash
 
-    - name: Build
+    - name: Build linux
+      run: cargo build --verbose --release
+      if: matrix.os == 'ubuntu-latest'
+
+    - name: Build windows
       run: cargo build --verbose --release --features embed_ui
+      if: matrix.os == 'windows-latest'
 
     - name: Create artifact directory
       run: mkdir artifacts
