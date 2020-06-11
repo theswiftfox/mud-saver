@@ -2,7 +2,7 @@ parameters:
 - name: archiveName
   displayName: Archive Name
   type: string
-  default: "$(Build.Repository.Name)"
+  default: 'mud-saver'
 
 trigger:
   branches:
