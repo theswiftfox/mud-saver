@@ -1,9 +1,3 @@
-parameters:
-- name: archiveName
-  displayName: Archive Name
-  type: string
-  default: 'mud-saver'
-
 trigger:
   branches:
     include: ['develop']
@@ -82,4 +76,10 @@ steps:
     inputs:
       rootFolderOrFile: '$(Build.BinariesDirectory)/mud-saver'
       archiveType: zip
-      archiveFile: '$(Build.ArtifactStagingDirectory)/$(parameters.archiveName)-$(build.my_tag)-$(TARGET).zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/mud-saver-$(Build.BuildNumber)-win64.zip'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
