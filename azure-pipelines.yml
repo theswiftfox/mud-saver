@@ -1,0 +1,86 @@
+trigger:
+  branches:
+    include: ['develop']
+  tags:
+    include: ['*']
+
+strategy:
+  matrix:
+    windows-nightly:
+      imageName: 'vs2017-win2016'
+      rustup_toolchain: nightly
+   # linux-nightly:
+   #   imageName: 'ubuntu-16.04'
+   #   rustup_toolchain: nightly
+
+pool:
+  vmImage: $(imageName)
+
+steps:
+  - script: |
+      set -e
+      curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain $RUSTUP_TOOLCHAIN
+      echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
+    displayName: Install rust
+    condition: ne( variables['Agent.OS'], 'Windows_NT' )
+  - script: |
+      curl -sSf -o rustup-init.exe https://win.rustup.rs
+      rustup-init.exe -y --profile minimal --default-toolchain %RUSTUP_TOOLCHAIN% --default-host x86_64-pc-windows-msvc
+      set PATH=%PATH%;%USERPROFILE%\.cargo\bin
+      echo "##vso[task.setvariable variable=PATH;]%PATH%;%USERPROFILE%\.cargo\bin"
+    displayName: Windows install rust
+    condition: eq( variables['Agent.OS'], 'Windows_NT' )
+
+  - bash: |
+      rustup default $RUSTUP_TOOLCHAIN
+      rustup update $RUSTUP_TOOLCHAIN
+    displayName: "Set toolchain version"
+
+    #build
+  - script: cargo build --release --features embed_ui
+    displayName: Cargo build (WIN)
+    condition: eq( variables['Agent.OS'], 'Windows_NT' )
+  - script: cargo build --release
+    displayName: Cargo build (LINUX)
+    condition: ne( variables['Agent.OS'], 'Windows_NT' )
+
+# This step help publish targets folder
+  - task: CopyFiles@2
+    displayName: Copy application
+    inputs:
+      sourceFolder: '$(Build.SourcesDirectory)/target/release/'
+      contents: |
+        mud-saver.exe
+      targetFolder: '$(Build.BinariesDirectory)/mud-saver'
+
+  - task: CopyFiles@2
+    displayName: Copy images
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)/images'
+      Contents: '**'
+      TargetFolder: '$(Build.BinariesDirectory)/mud-saver/images'
+  - task: CopyFiles@2
+    displayName: Copy templates
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)/templates'
+      Contents: '**'
+      TargetFolder: '$(Build.BinariesDirectory)/mud-saver/templates'
+  - task: CopyFiles@2
+    displayName: Copy static
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)/static'
+      Contents: '**'
+      TargetFolder: '$(Build.BinariesDirectory)/mud-saver/static'
+  - task: ArchiveFiles@2
+    displayName: Create Archive
+    inputs:
+      rootFolderOrFile: '$(Build.BinariesDirectory)/mud-saver'
+      archiveType: zip
+      archiveFile: '$(Build.ArtifactStagingDirectory)/mud-saver-$(Build.BuildNumber)-win64.zip'
+  
+  - task: PublishBuildArtifacts@1
+    displayName: Publish Artifacts
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'drop'
+      publishLocation: 'Container'
