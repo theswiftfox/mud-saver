@@ -26,6 +26,7 @@ use rocket_contrib::templates::{
 #[cfg(feature = "embed_ui")]
 use std::thread;
 
+use std::process::Command;
 use std::sync::Mutex;
 
 mod appconfig;
@@ -121,13 +122,47 @@ fn start_ui() {
 
 #[cfg(feature = "embed_ui")]
 fn main() {
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+        let edge_check = || -> Result<(), Box<dyn std::error::Error>> {
+            // check if local permission is set for edge
+            let mut cmd = Command::new("cmd");
+            cmd.args(&["/C", "CheckNetIsolation.exe", "LoopbackExempt", "-s"]);
+            cmd.creation_flags(CREATE_NO_WINDOW);
+            let output = cmd.output()?;
+
+            let output_str = std::str::from_utf8(&output.stdout)?;
+
+            if !output_str.contains("Microsoft.Win32WebViewHost_cw5n1h2txyewy") {
+                let mut cmd = Command::new("cmd");
+                cmd.args(&[
+                    "/C",
+                    "CheckNetIsolation.exe",
+                    "LoopbackExempt",
+                    "-a",
+                    "-n=Microsoft.Win32WebViewHost_cw5n1h2txyewy",
+                ]);
+                cmd.creation_flags(CREATE_NO_WINDOW);
+                let res = cmd.output()?;
+                if !res.status.success() {
+                    return Err("Setting edge local allowed failed")?;
+                }
+            }
+
+            Ok(())
+        };
+
+        edge_check().expect("Error starting application..");
+    }
     let _ = thread::spawn(|| start_rocket());
     thread::sleep(std::time::Duration::from_secs(1));
     start_ui();
 
     std::process::exit(0);
 }
-
 
 #[cfg(not(feature = "embed_ui"))]
 fn main() {
