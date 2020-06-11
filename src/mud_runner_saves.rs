@@ -75,6 +75,18 @@ impl MudrunnerSave {
     }
 }
 
+impl Clone for MudrunnerSave {
+    fn clone(&self) -> MudrunnerSave {
+        let new_save = MudrunnerSave {
+            user_name: self.user_name.clone(),
+            timestamp: self.timestamp,
+            original_name: self.original_name.clone()
+        };
+
+        return  new_save;
+    }
+}
+
 fn get_mudrunner_data_dir () -> Result<PathBuf, AppError> {
     let mut path = match dirs::config_dir() {
         Some(d) => d,
