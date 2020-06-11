@@ -1,6 +1,6 @@
 [package]
 name = "mud-saver"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Patrick Gantner <patrick.gantner@linesofcode.at>", "Thomas Rienößl <t.rioenessl@gmail.com>"]
 edition = "2018"
 
