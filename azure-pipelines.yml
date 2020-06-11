@@ -1,3 +1,13 @@
+parameters:
+- name: artifactName
+  displayName: Artifact Name
+  type: string
+  default: target
+- name: archiveName
+  displayName: Archive Name
+  type: string
+  default: "$(Build.Repository.Name)"
+
 trigger:
   branches:
     include: ['develop']
@@ -9,9 +19,9 @@ strategy:
     windows-nightly:
       imageName: 'vs2017-win2016'
       rustup_toolchain: nightly
-    linux-nightly:
-      imageName: 'ubuntu-16.04'
-      rustup_toolchain: nightly
+   # linux-nightly:
+   #   imageName: 'ubuntu-16.04'
+   #   rustup_toolchain: nightly
 
 pool:
   vmImage: $(imageName)
@@ -44,3 +54,36 @@ steps:
     displayName: Cargo build (LINUX)
     condition: ne( variables['Agent.OS'], 'Windows_NT' )
 
+# This step help publish targets folder
+  - task: CopyFiles@2
+    displayName: Copy assets
+    inputs:
+      sourceFolder: '$(Build.SourcesDirectory)/target/$(TARGET)/release/'
+      contents: |
+        mud-saver.exe
+      targetFolder: '$(Build.BinariesDirectory)/mud-saver'
+
+  - task: CopyFiles@2
+    displayName: Copy assets
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)/images'
+      Contents: '**'
+      TargetFolder: '$(Build.BinariesDirectory)/mud-saver/images'
+  - task: CopyFiles@2
+    displayName: Copy assets
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)/templates'
+      Contents: '**'
+      TargetFolder: '$(Build.BinariesDirectory)/mud-saver/templates'
+  - task: CopyFiles@2
+    displayName: Copy assets
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)/static'
+      Contents: '**'
+      TargetFolder: '$(Build.BinariesDirectory)/mud-saver/static'
+  - task: ArchiveFiles@2
+    displayName: Gather assets
+    inputs:
+      rootFolderOrFile: '$(Build.BinariesDirectory)/mud-saver'
+      archiveType: zip
+      archiveFile: '$(Build.ArtifactStagingDirectory)/$(parameters.archiveName)-$(build.my_tag)-$(TARGET).zip'
