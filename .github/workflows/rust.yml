@@ -19,4 +19,4 @@ jobs:
           toolchain: nightly
           override: true  
     - name: Build
-      run: cargo +nightly build --verbose
+      run: cargo +nightly build --verbose --features embed_ui
