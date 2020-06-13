@@ -1,18 +1,26 @@
 [package]
 name = "mud-saver"
 version = "0.1.0"
-authors = ["Patrick Gantner <patrick.gantner@linesofcode.at>", "Thomas Rienößl <t.rioenessl@gmail.com>"]
+authors = ["Patrick Gantner <patrick.gantner@linesofcode.at>", "Thomas Vauti-Rienößl <t.rioenessl@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = []
+
+embed_ui = ["web-view", "winapi", "reqwest" ]
 
 [dependencies]
+chrono = { version = "0.4.11", features = ["serde"] }
+dirs = "2.0.2"
+lazy_static = "1.4.0"
+reqwest = { version = "0.9.3", optional = true }
 rocket = "0.4.4"
 serde = { version = "1.0.110", features = ["derive"] }
 serde_json = "1.0.53"
-web-view = { version = "0.5.4", features = ["edge"] }
-lazy_static = "1.4.0"
-dirs = "2.0.2"
+uuid = { version = "0.8", features = ["v4"] }
+web-view = { version = "0.6.3", features = ["edge"], optional = true }
+winapi = { version = "0.3.8", optional = true }
+zip = "0.5.5"
 
 [dependencies.rocket_contrib]
 version = "0.4.4"
