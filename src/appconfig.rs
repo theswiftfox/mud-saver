@@ -14,7 +14,9 @@ pub struct Settings {
 const SETTINGS_FILE: &'static str = "settings.json";
 
 pub fn load() -> Result<Settings, Box<dyn Error>> {
-    let file = File::open(SETTINGS_FILE)?;
+    let mut settings_path = crate::get_app_data_dir();
+    settings_path.push(SETTINGS_FILE);
+    let file = File::open(settings_path)?;
     let reader = BufReader::new(file);
 
     let set = serde_json::from_reader(reader)?;
@@ -43,13 +45,17 @@ impl Settings {
 
     pub fn store(&self) -> Result<(), Box<dyn Error>> {
         dbg!("Stored:", &self);
-        serde_json::to_writer_pretty(File::create(SETTINGS_FILE)?, self)?;
+        let mut settings_path = crate::get_app_data_dir();
+        settings_path.push(SETTINGS_FILE);
+        serde_json::to_writer_pretty(File::create(settings_path)?, self)?;
 
         Ok(())
     }
 
     pub fn reload(&mut self) -> Result<(), Box<dyn Error>> {
-        let file = File::open(SETTINGS_FILE)?;
+        let mut settings_path = crate::get_app_data_dir();
+        settings_path.push(SETTINGS_FILE);
+        let file = File::open(settings_path)?;
         let reader = BufReader::new(file);
 
         let set: Settings = serde_json::from_reader(reader)?;

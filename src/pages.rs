@@ -4,8 +4,14 @@ use rocket_contrib::templates::Template;
 
 use crate::appconfig::Settings;
 use crate::error::AppError;
+use crate::mud_runner_saves::MudrunnerSave;
 use crate::snowrunner::SnowRunnerProfile;
 use crate::SETTINGS;
+
+#[get("/check")]
+pub fn check() -> Result<(), AppError> {
+    Ok(())
+}
 
 #[post("/exit")]
 pub fn exit() -> Result<(), AppError> {
@@ -27,17 +33,26 @@ pub fn overview() -> Result<Template, Status> {
 }
 
 #[get("/mud-runner")]
-pub fn mud_runner() -> Result<Template, Status> {
-    Ok(Template::render("mudrunner", ()))
+pub fn mud_runner() -> Result<Template, AppError> {
+    let avail_saves = MudrunnerSave::get_available_mudrunner_saves()?;
+    Ok(Template::render("mudrunner", avail_saves))
+}
+
+#[post("/mud-runner/save?<original_name>&<user_name>")]
+pub fn store_mudrunner_save(original_name: Option<String>, user_name: Option<String>) -> Result<(), AppError> {
+    if original_name.is_none() {
+        return Err(AppError::MissingParameter(String::from("original_name")));
+    }
+    if user_name.is_none() {
+        return Err(AppError::MissingParameter(String::from("user_name")));
+    }
+    MudrunnerSave::archive_savegame(&user_name.unwrap(), &original_name.unwrap())
 }
 
 /* *** SNOW RUNNER *** */
 #[get("/snow-runner")]
-pub fn snow_runner() -> Result<Template, JsonValue> {
-    let profiles = match SnowRunnerProfile::get_available_snowrunner_profiles() {
-        Ok(p) => p,
-        Err(e) => return Err(json!(e)),
-    };
+pub fn snow_runner() -> Result<Template, AppError> {
+    let profiles = SnowRunnerProfile::get_available_snowrunner_profiles()?;
     Ok(Template::render("snowrunner", profiles))
 }
 

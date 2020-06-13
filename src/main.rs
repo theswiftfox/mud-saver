@@ -1,4 +1,7 @@
-#![cfg_attr(feature = "embed_ui", windows_subsystem = "windows")]
+#![cfg_attr(
+    all(feature = "embed_ui", not(debug_assertions)),
+    windows_subsystem = "windows"
+)]
 #![feature(proc_macro_hygiene, decl_macro)]
 
 extern crate chrono;
@@ -23,13 +26,11 @@ use rocket_contrib::templates::{
     Template,
 };
 
-#[cfg(feature = "embed_ui")]
-use std::thread;
-
 use std::sync::Mutex;
 
 mod appconfig;
 mod error;
+mod mud_runner_saves;
 mod pages;
 mod snowrunner;
 
@@ -39,14 +40,17 @@ lazy_static! {
 
 const APP_DATA_NAME: &'static str = "MudSaver";
 
-pub fn get_app_data_dir() -> std::io::Result<std::path::PathBuf> {
+pub fn get_app_data_dir() ->std::path::PathBuf {
     let path = dirs::data_dir();
     if path.is_some() {
         let mut p = path.unwrap();
         p.push(APP_DATA_NAME);
-        Ok(p)
+        if !p.exists() {
+            std::fs::create_dir(&p).unwrap();
+        }
+        p
     } else {
-        std::env::current_dir()
+        std::env::current_dir().unwrap()
     }
 }
 
@@ -57,6 +61,7 @@ fn start_rocket() {
             routes![
                 pages::exit,
                 pages::index,
+                pages::check,
                 pages::overview,
                 pages::mud_runner,
                 pages::snow_runner,
@@ -66,6 +71,7 @@ fn start_rocket() {
                 pages::get_snowrunner_profile,
                 pages::delete_snow_runner_save,
                 pages::restore_snow_runner_save,
+                pages::store_mudrunner_save,
             ],
         )
         .mount("/images", StaticFiles::from("./images"))
@@ -105,31 +111,21 @@ fn start_rocket() {
 }
 
 #[cfg(feature = "embed_ui")]
-fn start_ui() {
-    let res = (1000, 600);
-    web_view::builder()
-        .title("MudSaver")
-        .content(web_view::Content::Url("http://localhost:8000"))
-        .size(res.0 as i32, res.1 as i32)
-        .resizable(true)
-        .debug(true)
-        .user_data(())
-        .invoke_handler(|_webview, _arg| Ok(()))
-        .run()
-        .unwrap();
-}
+mod webview;
 
 #[cfg(feature = "embed_ui")]
 fn main() {
-    let _ = thread::spawn(|| start_rocket());
-    thread::sleep(std::time::Duration::from_secs(1));
-    start_ui();
-
-    std::process::exit(0);
+    std::process::exit(match webview::main_ui() {
+        Ok(_) => 0,
+        Err(_) => {
+            eprintln!("Error while running application.");
+            1
+        }
+    });
 }
-
 
 #[cfg(not(feature = "embed_ui"))]
 fn main() {
+    get_app_data_dir();
     start_rocket();
 }
