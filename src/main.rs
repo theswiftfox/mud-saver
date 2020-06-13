@@ -28,11 +28,10 @@ use rocket_contrib::templates::{
 
 use std::sync::Mutex;
 
-mod error;
 mod appconfig;
 mod error;
-mod pages;
 mod mud_runner_saves;
+mod pages;
 mod snowrunner;
 
 lazy_static! {
@@ -41,14 +40,17 @@ lazy_static! {
 
 const APP_DATA_NAME: &'static str = "MudSaver";
 
-pub fn get_app_data_dir() -> std::io::Result<std::path::PathBuf> {
+pub fn get_app_data_dir() ->std::path::PathBuf {
     let path = dirs::data_dir();
     if path.is_some() {
         let mut p = path.unwrap();
         p.push(APP_DATA_NAME);
-        Ok(p)
+        if !p.exists() {
+            std::fs::create_dir(&p).unwrap();
+        }
+        p
     } else {
-        std::env::current_dir()
+        std::env::current_dir().unwrap()
     }
 }
 
@@ -124,5 +126,6 @@ fn main() {
 
 #[cfg(not(feature = "embed_ui"))]
 fn main() {
+    get_app_data_dir();
     start_rocket();
 }

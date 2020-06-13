@@ -171,7 +171,9 @@ impl SnowRunnerProfile {
                 Ok(_) => (),
                 Err(e) => {
                     dbg!(&data_dir, &e);
-                    return Err(AppError::FileWriteError(String::from("Unable to create data directory for backups.")));
+                    return Err(AppError::FileWriteError(String::from(
+                        "Unable to create data directory for backups.",
+                    )));
                 }
             }
         }
@@ -375,13 +377,7 @@ fn get_snowrunner_profile_dir() -> Result<PathBuf, AppError> {
 }
 
 fn get_snowrunner_data_dir() -> Result<PathBuf, AppError> {
-    let mut path = match crate::get_app_data_dir() {
-        Ok(p) => p,
-        Err(e) => {
-            dbg!(e);
-            return Err(AppError::AppDataDirNotFound(String::new()));
-        }
-    };
+    let mut path = crate::get_app_data_dir();
     path.push(DATA_FOLDER);
     Ok(path)
 }
