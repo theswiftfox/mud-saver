@@ -51,11 +51,8 @@ pub fn store_mudrunner_save(original_name: Option<String>, user_name: Option<Str
 
 /* *** SNOW RUNNER *** */
 #[get("/snow-runner")]
-pub fn snow_runner() -> Result<Template, JsonValue> {
-    let profiles = match SnowRunnerProfile::get_available_snowrunner_profiles() {
-        Ok(p) => p,
-        Err(e) => return Err(json!(e)),
-    };
+pub fn snow_runner() -> Result<Template, AppError> {
+    let profiles = SnowRunnerProfile::get_available_snowrunner_profiles()?;
     Ok(Template::render("snowrunner", profiles))
 }
 
