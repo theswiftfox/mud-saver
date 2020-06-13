@@ -8,7 +8,7 @@ strategy:
   matrix:
     windows-nightly:
       imageName: 'vs2017-win2016'
-      rustup_toolchain: nightly
+      rustup_toolchain: nightly-2020-06-10
 
 pool:
   vmImage: $(imageName)
