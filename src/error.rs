@@ -9,12 +9,14 @@ use std::io::Cursor;
 #[derive(Debug, Deserialize, Serialize)]
 pub enum AppError {
     SettingsNotFound(String),
+    HomeDirNotFound(String),
+    MudrunnerProfileDirMissing(String),
+    MudrunnerArchiveDirMissing(String),
     SnowRunnerProfileDirMissing(String),
     SnowRunnerNoProfile(String),
     FileCreateError(String),
     FileWriteError(String),
     AppDataDirNotFound(String),
-    HomeDirNotFound(String),
     FileReadError(String),
     Unimplemented(String),
     MissingParameter(String),
@@ -36,6 +38,8 @@ impl Error for AppError {
             AppError::Unimplemented(what) => what,
             AppError::MissingParameter(what) => what,
             AppError::SavegameNotFound(what) => what,
+            AppError::MudrunnerProfileDirMissing(what) => what,
+            AppError::MudrunnerArchiveDirMissing(what) => what,
             AppError::ProfileRestoreFailed(what) => what,
         }
     }
@@ -56,6 +60,8 @@ impl<'r> Responder<'r> for AppError {
             AppError::Unimplemented(_) => Status::Forbidden,
             AppError::MissingParameter(_) => Status::BadRequest,
             AppError::SavegameNotFound(_) => Status::BadRequest,
+            AppError::MudrunnerProfileDirMissing(_) => Status::InternalServerError,
+            AppError::MudrunnerArchiveDirMissing(_) => Status::InternalServerError,
             AppError::ProfileRestoreFailed(_) => Status::InternalServerError,
         };
         Response::build()
@@ -70,6 +76,16 @@ impl Display for AppError {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
             AppError::SettingsNotFound(what) => write!(f, "Settings file not found: {}", what),
+            AppError::HomeDirNotFound(what) => {
+                write!(f, "Home directory could not be found: {}", what)
+            }
+            AppError::MudrunnerProfileDirMissing(_) => {
+                write!(f, "Directory of Mudrunner savegames missing or corrupted")
+            }
+            AppError::MudrunnerArchiveDirMissing(_) => write!(
+                f,
+                "Directory of archived Mudrunner savegames missing or corrupted"
+            ),
             AppError::SnowRunnerProfileDirMissing(what) => {
                 write!(f, "SnowRunner profile directory not found: {}", what)
             }

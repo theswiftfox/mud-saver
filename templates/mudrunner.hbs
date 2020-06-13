@@ -1,3 +1,48 @@
 <div class="w3-panel">
-    <h2>MudRunner Saves</h2>
+    <h2>MudRunner Available Saves</h2>
+    <div class="w3-container">
+        <ul class="w3-ul w3-bar">
+            {{#each this}}
+            <li class="w3-bar">
+                <div class="w3-bar-item">
+                    <span class="w3-large">
+                        {{this.original_name}}
+                    </span>
+                    <br/>
+                    <span class="w3-small">
+                        {{date-time date=this.timestamp}}
+                    </span>
+                </div>
+                <!-- Button -->
+                <div class="w3-bar-item w3-right">
+                    <button class="w3-button w3-theme"
+                        onclick="open_mudrunner_modal('{{this.original_name}}')">Backup</button>
+                </div>
+            </li>
+            {{/each}}
+        </ul>
+    </div>
+</div>
+
+</div>
+<div id="mudrunner-save-modal" class="w3-modal">
+    <div class="w3-modal-content">
+        <div class="w3-card">
+            <header class="w3-panel w3-theme">
+                <h2>Save Profile</h2>
+            </header>
+            <div class="w3-container">
+                <span onclick="close_mudrunner_modal()" class="w3-button w3-display-topright">&times;</span>
+                <div class="w3-row w3-section">
+                    <span>Enter a name for the backup (e.g. "multiplayer session with James")</span>
+                </div>
+                <div class="w3-row w3-section">
+                    <input id="mudrunner-save-name" type="text" class="w3-input w3-border w3-round" placeholder="Name">
+                </div>
+                <div class="w3-row w3-section">
+                    <button class="w3-button w3-theme w3-block w3-padding" onclick="backup_mudrunner()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

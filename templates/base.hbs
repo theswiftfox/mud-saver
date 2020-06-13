@@ -247,6 +247,24 @@
             }
         }
 
+        function backup_mudrunner() {
+            var original_name = document.getElementById('mudrunner-save-modal').getAttribute('original_name');
+            var user_name = document.getElementById('mudrunner-save-name').value;
+            var http = new XMLHttpRequest();
+            http.open('POST', '/mud-runner/save?original_name=' + original_name + '&user_name=' + user_name);
+            http.send();
+            http.onreadystatechange = function () {
+                if (http.readyState == 4) {
+                    if (this.status == 200) {
+                        alert('Backup Succesful');
+                        close_mudrunner_modal();
+                    } else {
+                        alert(http.responseText);
+                    }
+                }
+            }
+        }
+
         function delete_snowrunner(save_uuid) {
             var http = new XMLHttpRequest();
             http.open('DELETE', '/snow-runner/profile?id=' + selected_snowrunner_profile + '&savegame=' + save_uuid);
@@ -295,6 +313,19 @@
             modal.style.display = 'none';
             modal.setAttribute('profile', null)
             document.getElementById('snowrunner-save-name').value = null;
+        }
+
+        function open_mudrunner_modal(original_name) {
+            var modal = document.getElementById('mudrunner-save-modal');
+            modal.style.display = 'block';
+            modal.setAttribute('original_name', original_name);
+        }
+
+        function close_mudrunner_modal() {
+            var modal = document.getElementById('mudrunner-save-modal');
+            modal.style.display = 'none';
+            modal.setAttribute('original_name', null)
+            document.getElementById('mudrunner-save-name').value = null;
         }
 
         function load_settings(showModal) {
