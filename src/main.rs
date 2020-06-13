@@ -69,6 +69,7 @@ fn start_rocket() {
                 pages::get_snowrunner_profile,
                 pages::delete_snow_runner_save,
                 pages::restore_snow_runner_save,
+                pages::store_mudrunner_save,
             ],
         )
         .mount("/images", StaticFiles::from("./images"))
