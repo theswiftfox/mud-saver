@@ -18,9 +18,23 @@ pub struct MudrunnerSave {
 }
 
 impl MudrunnerSave {
-// function to get a vector of the mudrunner savegames' titles/user names in our app's storage
-    pub fn get_archived_mudrunner_saves() -> Result<Vec<MudrunnerSave> , AppError> {
-        Err(AppError::SettingsNotFound(String::from("")))
+    // function to get a vector of the mudrunner savegames' titles/user names in our app's storage
+    pub fn get_archived_mudrunner_saves() -> Result<Vec<MudrunnerSave>, AppError> {
+        let path = get_mudrunner_profile_dir()?;
+        let dir_listing = match read_dir(&path) {
+            Ok(d) => d,
+            Err(_) => {
+                return Err(AppError::MudrunnerArchiveDirMissing(String::from(
+                    "Mudrunner archive directory missing",
+                )))
+            }
+        };
+
+        // FIXME: We need some kind of metadata to get the user_name corresponding to a file.
+
+        Err(AppError::MudrunnerArchiveDirMissing(String::from(
+            "Mudrunner archive directory missing",
+        )))
     }
 
     // function to get a vector of the mudrunner savegames' file names in Mudrunner's storage
