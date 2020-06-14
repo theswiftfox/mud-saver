@@ -1,16 +1,19 @@
-extern crate reqwest;
-
+use actix_web::client::Client;
 use std::process::Command;
 
 #[cfg(feature = "embed_ui")]
 use std::thread;
 
-fn check_server_up() -> bool {
-    let request = match reqwest::get("http://localhost:8000/check") {
-        Ok(r) => r,
-        Err(_) => return false,
-    };
-    request.status() == reqwest::StatusCode::OK
+async fn check_server_up() -> bool {
+    let client = Client::default()
+        .get("http://localhost:8000/check") // <- Create request builder
+        .header("User-Agent", "Actix-web")
+        .send()
+        .await;
+    match client {
+        Ok(r) => r.status() == actix_web::http::StatusCode::OK,
+        Err(_) => false,
+    }
 }
 
 fn start_ui() {
@@ -30,7 +33,7 @@ fn start_ui() {
 #[cfg(target_os = "windows")]
 extern crate winapi;
 
-pub fn main_ui() -> Result<(), ()> {
+pub async fn main_ui() -> Result<(), ()> {
     #[cfg(target_os = "windows")]
     {
         use std::os::windows::process::CommandExt;
@@ -113,7 +116,7 @@ pub fn main_ui() -> Result<(), ()> {
     let _ = thread::spawn(|| crate::start_rocket());
     let mut ok = false;
     for _ in 0..10 {
-        ok = check_server_up();
+        ok = check_server_up().await;
         if ok {
             break;
         }
