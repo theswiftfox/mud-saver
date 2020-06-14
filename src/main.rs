@@ -2,16 +2,15 @@
     all(feature = "embed_ui", not(debug_assertions)),
     windows_subsystem = "windows"
 )]
-#![feature(proc_macro_hygiene, decl_macro)]
+//#![feature(proc_macro_hygiene, decl_macro)]
 
+extern crate actix_files;
+#[macro_use]
+extern crate actix_web;
 extern crate chrono;
 extern crate dirs;
 #[macro_use]
 extern crate lazy_static;
-#[macro_use]
-extern crate rocket;
-#[macro_use]
-extern crate rocket_contrib;
 extern crate serde;
 extern crate uuid;
 extern crate zip;
@@ -20,11 +19,9 @@ use chrono::{
     offset::{Local, Utc},
     DateTime,
 };
-use rocket_contrib::serve::StaticFiles;
-use rocket_contrib::templates::{
-    handlebars::{Context, Handlebars, Helper, HelperResult, Output, RenderContext, RenderError},
-    Template,
-};
+
+use actix_web::{web, App, HttpServer};
+use handlebars::{Context, Handlebars, Helper, HelperResult, Output, RenderContext, RenderError};
 
 use std::sync::Mutex;
 
@@ -40,7 +37,7 @@ lazy_static! {
 
 const APP_DATA_NAME: &'static str = "MudSaver";
 
-pub fn get_app_data_dir() ->std::path::PathBuf {
+pub fn get_app_data_dir() -> std::path::PathBuf {
     let path = dirs::data_dir();
     if path.is_some() {
         let mut p = path.unwrap();
@@ -54,68 +51,75 @@ pub fn get_app_data_dir() ->std::path::PathBuf {
     }
 }
 
-fn start_rocket() {
-    rocket::ignite()
-        .mount(
-            "/",
-            routes![
-                pages::exit,
-                pages::index,
-                pages::check,
-                pages::overview,
-                pages::mud_runner,
-                pages::snow_runner,
-                pages::settings,
-                pages::save_settings,
-                pages::store_snow_runner_profile,
-                pages::get_snowrunner_profile,
-                pages::delete_snow_runner_save,
-                pages::restore_snow_runner_save,
-                pages::store_mudrunner_save,
-            ],
-        )
-        .mount("/images", StaticFiles::from("./images"))
-        .mount("/static", StaticFiles::from("./static"))
-        .attach(Template::custom(|engines| {
-            engines.handlebars.register_helper(
-                "date-time",
-                Box::new(
-                    |h: &Helper,
-                     _: &Handlebars,
-                     _: &Context,
-                     _: &mut RenderContext,
-                     out: &mut dyn Output|
-                     -> HelperResult {
-                        if let Some(date_val) = h.hash().get("date") {
-                            let date_js = date_val.value();
-                            if let Ok(date) =
-                                serde_json::from_value::<DateTime<Utc>>(date_js.clone())
-                            {
-                                let local = DateTime::<Local>::from(date);
-                                let local_date = local.naive_local();
-                                let date_str = format!(
-                                    "{} - {}",
-                                    local_date.date(),
-                                    local_date.time().format("%H:%M:%S")
-                                );
-                                out.write(&date_str)?;
-                                return Ok(());
-                            }
-                        }
-                        Err(RenderError::new("Error parsing date"))
-                    },
-                ),
-            );
-        }))
-        .launch();
+#[actix_rt::main]
+async fn start_rocket() {
+    let mut handlebars = handlebars::Handlebars::new();
+    handlebars
+        .register_templates_directory(".hbs", "./templates")
+        .unwrap();
+    handlebars.register_helper(
+        "date-time",
+        Box::new(
+            |h: &Helper,
+             _: &Handlebars,
+             _: &Context,
+             _: &mut RenderContext,
+             out: &mut dyn Output|
+             -> HelperResult {
+                if let Some(date_val) = h.hash().get("date") {
+                    let date_js = date_val.value();
+                    if let Ok(date) = serde_json::from_value::<DateTime<Utc>>(date_js.clone()) {
+                        let local = DateTime::<Local>::from(date);
+                        let local_date = local.naive_local();
+                        let date_str = format!(
+                            "{} - {}",
+                            local_date.date(),
+                            local_date.time().format("%H:%M:%S")
+                        );
+                        out.write(&date_str)?;
+                        return Ok(());
+                    }
+                }
+                Err(RenderError::new("Error parsing date"))
+            },
+        ),
+    );
+    let hb_ref = web::Data::new(handlebars);
+    HttpServer::new(move || {
+        App::new()
+            // .wrap(middleware::Logger::default())
+            .app_data(hb_ref.clone())
+            .service(pages::exit)
+            .service(pages::index)
+            .service(pages::check)
+            .service(pages::overview)
+            .service(pages::settings)
+            .service(pages::mud_runner)
+            .service(pages::snow_runner)
+            .service(pages::settings)
+            .service(pages::save_settings)
+            .service(pages::store_snowrunner_profile)
+            .service(pages::get_snowrunner_profile)
+            .service(pages::delete_snow_runner_save)
+            .service(pages::restore_snow_runner_save)
+            .service(pages::store_mudrunner_save)
+            .service(actix_files::Files::new("/static", "./static"))
+            .service(actix_files::Files::new("/images", "./images"))
+    })
+    .bind("127.0.0.1:8000")
+    .unwrap()
+    .run()
+    .await
+    .unwrap();
 }
 
 #[cfg(feature = "embed_ui")]
 mod webview;
 
 #[cfg(feature = "embed_ui")]
-fn main() {
-    std::process::exit(match webview::main_ui() {
+#[actix_rt::main]
+async fn main() {
+    std::process::exit(match webview::main_ui().await {
         Ok(_) => 0,
         Err(_) => {
             eprintln!("Error while running application.");

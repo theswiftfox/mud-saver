@@ -1,10 +1,7 @@
-use rocket::http::{ContentType, Status};
-use rocket::request::Request;
-use rocket::response::{self, Responder, Response};
+use actix_web::{error, http::header, http::StatusCode, HttpResponse};
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fmt::{Display, Formatter, Result};
-use std::io::Cursor;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum AppError {
@@ -45,30 +42,29 @@ impl Error for AppError {
     }
 }
 
-impl<'r> Responder<'r> for AppError {
-    fn respond_to(self, _request: &Request) -> response::Result<'r> {
-        let msg = json!(self);
-        let status = match self {
-            AppError::SettingsNotFound(_) => Status::InternalServerError,
-            AppError::SnowRunnerProfileDirMissing(_) => Status::InternalServerError,
-            AppError::SnowRunnerNoProfile(_) => Status::BadRequest,
-            AppError::FileCreateError(_) => Status::InternalServerError,
-            AppError::FileWriteError(_) => Status::InternalServerError,
-            AppError::AppDataDirNotFound(_) => Status::InternalServerError,
-            AppError::HomeDirNotFound(_) => Status::InternalServerError,
-            AppError::FileReadError(_) => Status::InternalServerError,
-            AppError::Unimplemented(_) => Status::Forbidden,
-            AppError::MissingParameter(_) => Status::BadRequest,
-            AppError::SavegameNotFound(_) => Status::BadRequest,
-            AppError::MudrunnerProfileDirMissing(_) => Status::InternalServerError,
-            AppError::MudrunnerArchiveDirMissing(_) => Status::InternalServerError,
-            AppError::ProfileRestoreFailed(_) => Status::InternalServerError,
-        };
-        Response::build()
-            .sized_body(Cursor::new(msg.to_string()))
-            .header(ContentType::JSON)
-            .status(status)
-            .ok()
+impl error::ResponseError for AppError {
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code())
+            .set_header(header::CONTENT_TYPE, "text/html; charset=utf-8")
+            .body(self.to_string())
+    }
+    fn status_code(&self) -> StatusCode {
+        match *self {
+            AppError::SettingsNotFound(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::SnowRunnerProfileDirMissing(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::SnowRunnerNoProfile(_) => StatusCode::BAD_REQUEST,
+            AppError::FileCreateError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::FileWriteError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::AppDataDirNotFound(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::HomeDirNotFound(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::FileReadError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::Unimplemented(_) => StatusCode::FORBIDDEN,
+            AppError::SavegameNotFound(_) => StatusCode::BAD_REQUEST,
+            AppError::MissingParameter(_) => StatusCode::BAD_REQUEST,
+            AppError::MudrunnerProfileDirMissing(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::MudrunnerArchiveDirMissing(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::ProfileRestoreFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
     }
 }
 
@@ -95,7 +91,6 @@ impl Display for AppError {
             AppError::FileCreateError(what) => write!(f, "Error creating file: {}", what),
             AppError::FileWriteError(what) => write!(f, "Error writing to file: {}", what),
             AppError::AppDataDirNotFound(_) => write!(f, "AppData directory could not be found!"),
-            AppError::HomeDirNotFound(_) => write!(f, "Home directory could not be found!"),
             AppError::FileReadError(_) => write!(f, "Error reading savegames from disk!"),
             AppError::Unimplemented(_) => write!(f, "Method not implemented"),
             AppError::MissingParameter(what) => write!(f, "Missing parameter {}!", what),
