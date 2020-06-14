@@ -242,9 +242,7 @@ impl SnowRunnerProfile {
         };
         self.meta_data.stored_profiles.push(saved_profile);
         self.store_metadata()?;
-        // todo: create archive of current profile folder in app-data;
-        // add saved profile to metadata
-        // store metadata
+
         Ok(())
     }
 
