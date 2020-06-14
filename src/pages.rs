@@ -1,6 +1,6 @@
-use rocket::http::Status;
-use rocket_contrib::json::{Json, JsonValue};
-use rocket_contrib::templates::Template;
+use actix_web::{web, HttpResponse, Result};
+use handlebars::Handlebars;
+use serde::Deserialize;
 
 use crate::appconfig::Settings;
 use crate::error::AppError;
@@ -9,124 +9,140 @@ use crate::snowrunner::SnowRunnerProfile;
 use crate::SETTINGS;
 
 #[get("/check")]
-pub fn check() -> Result<(), AppError> {
-    Ok(())
+pub fn check() -> HttpResponse {
+    HttpResponse::Ok().finish()
 }
 
 #[post("/exit")]
-pub fn exit() -> Result<(), AppError> {
+pub fn exit() -> HttpResponse {
     std::process::exit(0);
 }
 
 #[get("/")]
-pub fn index() -> Result<Template, Status> {
+pub async fn index(hb: web::Data<Handlebars<'_>>) -> HttpResponse {
     let color = match SETTINGS.lock() {
         Ok(s) => s.get_color(),
-        Err(_) => return Err(Status::InternalServerError),
+        Err(_) => return HttpResponse::InternalServerError().finish(),
     };
-    Ok(Template::render("base", color))
+    let body = match hb.render("base", &color) {
+        Ok(b) => b,
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
+    HttpResponse::Ok().body(body)
 }
 
 #[get("/overview")]
-pub fn overview() -> Result<Template, Status> {
-    Ok(Template::render("index", ()))
+pub async fn overview(hb: web::Data<Handlebars<'_>>) -> HttpResponse {
+    match hb.render("index", &()) {
+        Ok(b) => HttpResponse::Ok().body(b),
+        Err(_) => HttpResponse::InternalServerError().finish(),
+    }
 }
 
 #[get("/mud-runner")]
-pub fn mud_runner() -> Result<Template, AppError> {
+pub async fn mud_runner(hb: web::Data<Handlebars<'_>>) -> Result<HttpResponse> {
     let avail_saves = MudrunnerSave::get_available_mudrunner_saves()?;
-    Ok(Template::render("mudrunner", avail_saves))
+    match hb.render("mudrunner", &avail_saves) {
+        Ok(b) => Ok(HttpResponse::Ok().body(b)),
+        Err(_) => Ok(HttpResponse::InternalServerError().finish()),
+    }
 }
 
-#[post("/mud-runner/save?<original_name>&<user_name>")]
-pub fn store_mudrunner_save(original_name: Option<String>, user_name: Option<String>) -> Result<(), AppError> {
-    if original_name.is_none() {
-        return Err(AppError::MissingParameter(String::from("original_name")));
-    }
-    if user_name.is_none() {
-        return Err(AppError::MissingParameter(String::from("user_name")));
-    }
-    MudrunnerSave::archive_savegame(&user_name.unwrap(), &original_name.unwrap())
+#[derive(Deserialize)]
+pub struct MudrunnerSaveRequest {
+    original_name: String,
+    user_name: String,
 }
 
-/* *** SNOW RUNNER *** */
+#[post("/mud-runner/save")]
+pub async fn store_mudrunner_save(
+    params: web::Query<MudrunnerSaveRequest>,
+) -> Result<HttpResponse, AppError> {
+    MudrunnerSave::archive_savegame(&params.user_name, &params.original_name)?;
+    Ok(HttpResponse::Ok().finish())
+}
+
+// /* *** SNOW RUNNER *** */
 #[get("/snow-runner")]
-pub fn snow_runner() -> Result<Template, AppError> {
+pub async fn snow_runner(hb: web::Data<Handlebars<'_>>) -> Result<HttpResponse> {
     let profiles = SnowRunnerProfile::get_available_snowrunner_profiles()?;
-    Ok(Template::render("snowrunner", profiles))
+    match hb.render("snowrunner", &profiles) {
+        Ok(b) => Ok(HttpResponse::Ok().body(b)),
+        Err(e) => Ok(HttpResponse::InternalServerError().body(e.to_string())),
+    }
 }
 
-#[get("/snow-runner/profile?<id>")]
-pub fn get_snowrunner_profile(id: Option<String>) -> Result<Template, AppError> {
-    if id.is_none() {
-        return Err(AppError::MissingParameter(String::from("id")));
-    }
-    let profile = SnowRunnerProfile::get_snowrunner_profile(&id.unwrap())?;
+#[derive(Deserialize)]
+pub struct SnowRunnerProfileRequest {
+    id: String,
+}
+
+#[get("/snow-runner/profile")]
+pub async fn get_snowrunner_profile(
+    hb: web::Data<Handlebars<'_>>,
+    params: web::Query<SnowRunnerProfileRequest>,
+) -> Result<HttpResponse, AppError> {
+    let profile = SnowRunnerProfile::get_snowrunner_profile(&params.id)?;
     let saves = profile.get_archived_snowrunner_saves();
-    Ok(Template::render("snowrunner-saves", saves))
+    match hb.render("snowrunner-saves", &saves) {
+        Ok(b) => Ok(HttpResponse::Ok().body(b)),
+        Err(_) => Ok(HttpResponse::InternalServerError().finish()),
+    }
 }
 
-#[post("/snow-runner/profile?<id>&<name>")]
-pub fn store_snow_runner_profile(id: Option<String>, name: Option<String>) -> Result<(), AppError> {
-    if id.is_none() {
-        return Err(AppError::MissingParameter(String::from("id")));
-    }
-    if name.is_none() {
-        return Err(AppError::MissingParameter(String::from("name")));
-    }
-    let mut profile = SnowRunnerProfile::get_snowrunner_profile(&id.unwrap())?;
-    profile.archive_savegame(&name.unwrap())
+#[derive(Deserialize)]
+pub struct SnowRunnerProfileSaveRequest {
+    id: String,
+    name: String,
 }
+
+#[post("/snow-runner/profile")]
+pub async fn store_snowrunner_profile(
+    params: web::Query<SnowRunnerProfileSaveRequest>,
+) -> Result<HttpResponse, AppError> {
+    let mut profile = SnowRunnerProfile::get_snowrunner_profile(&params.id)?;
+    profile.archive_savegame(&params.name)?;
+    Ok(HttpResponse::Ok().finish())
+}
+
 #[delete("/snow-runner/profile?<id>&<savegame>")]
-pub fn delete_snow_runner_save(
-    id: Option<String>,
-    savegame: Option<String>,
-) -> Result<(), AppError> {
-    if id.is_none() {
-        return Err(AppError::MissingParameter(String::from("id")));
-    }
-    if savegame.is_none() {
-        return Err(AppError::MissingParameter(String::from("savegame")));
-    }
-    let mut profile = SnowRunnerProfile::get_snowrunner_profile(&id.unwrap())?;
-    profile.delete_archived_savegame(&savegame.unwrap())
+pub async fn delete_snow_runner_save(
+    params: web::Query<SnowRunnerProfileSaveRequest>,
+) -> Result<HttpResponse, AppError> {
+    let mut profile = SnowRunnerProfile::get_snowrunner_profile(&params.id)?;
+    profile.delete_archived_savegame(&params.name)?;
+    Ok(HttpResponse::Ok().finish())
 }
 
 #[put("/snow-runner/profile?<id>&<savegame>")]
-pub fn restore_snow_runner_save(
-    id: Option<String>,
-    savegame: Option<String>,
-) -> Result<(), AppError> {
-    if id.is_none() {
-        return Err(AppError::MissingParameter(String::from("id")));
-    }
-    if savegame.is_none() {
-        return Err(AppError::MissingParameter(String::from("savegame")));
-    }
-    let mut profile = SnowRunnerProfile::get_snowrunner_profile(&id.unwrap())?;
-    profile.restore_backup(&savegame.unwrap())
+pub async fn restore_snow_runner_save(
+    params: web::Query<SnowRunnerProfileSaveRequest>,
+) -> Result<HttpResponse, AppError> {
+    let mut profile = SnowRunnerProfile::get_snowrunner_profile(&params.id)?;
+    profile.restore_backup(&params.name)?;
+    Ok(HttpResponse::Ok().finish())
 }
 
 #[get("/settings")]
-pub fn settings() -> Result<Json<Settings>, Status> {
+pub fn settings() -> HttpResponse {
     match SETTINGS.lock() {
-        Ok(s) => Ok(Json(s.clone())),
-        Err(_) => Err(Status::InternalServerError),
+        Ok(s) => HttpResponse::Ok().json(s.clone()),
+        Err(_) => HttpResponse::InternalServerError().finish(),
     }
 }
 
-#[post("/settings", format = "json", data = "<settings>")]
-pub fn save_settings(settings: Json<Settings>) -> Result<(), Status> {
-    match settings.store() {
+#[post("/settings")]
+pub async fn save_settings(settings_json: web::Json<Settings>) -> HttpResponse {
+    match settings_json.store() {
         Ok(_) => {}
-        Err(_) => return Err(Status::InternalServerError),
+        Err(_) => return HttpResponse::InternalServerError().finish(),
     };
 
     match match SETTINGS.lock() {
         Ok(mut s) => s.reload(),
-        Err(_) => return Err(Status::InternalServerError),
+        Err(_) => return HttpResponse::InternalServerError().finish(),
     } {
-        Ok(_) => Ok(()),
-        Err(_) => Err(Status::InternalServerError),
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(_) => HttpResponse::InternalServerError().finish(),
     }
 }
