@@ -105,21 +105,27 @@ pub async fn store_snowrunner_profile(
     Ok(HttpResponse::Ok().finish())
 }
 
-#[delete("/snow-runner/profile?<id>&<savegame>")]
+#[derive(Deserialize)]
+pub struct SnowRunnerManageSavedRequest {
+    id: String, // profile uuid
+    savegame: String, // savegame uuid
+}
+
+#[delete("/snow-runner/profile")]
 pub async fn delete_snow_runner_save(
-    params: web::Query<SnowRunnerProfileSaveRequest>,
+    params: web::Query<SnowRunnerManageSavedRequest>,
 ) -> Result<HttpResponse, AppError> {
     let mut profile = SnowRunnerProfile::get_snowrunner_profile(&params.id)?;
-    profile.delete_archived_savegame(&params.name)?;
+    profile.delete_archived_savegame(&params.savegame)?;
     Ok(HttpResponse::Ok().finish())
 }
 
-#[put("/snow-runner/profile?<id>&<savegame>")]
+#[put("/snow-runner/profile")]
 pub async fn restore_snow_runner_save(
-    params: web::Query<SnowRunnerProfileSaveRequest>,
+    params: web::Query<SnowRunnerManageSavedRequest>,
 ) -> Result<HttpResponse, AppError> {
     let mut profile = SnowRunnerProfile::get_snowrunner_profile(&params.id)?;
-    profile.restore_backup(&params.name)?;
+    profile.restore_backup(&params.savegame)?;
     Ok(HttpResponse::Ok().finish())
 }
 
