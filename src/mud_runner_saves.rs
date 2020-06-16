@@ -205,8 +205,15 @@ impl MudrunnerSave {
     }
 
     // function to install a specific savegame (overwriting the existing one)
-    pub fn restore_savegame(&self, savegame: &MudrunnerSave) -> Result<(), AppError> {
-        Err(AppError::SettingsNotFound(String::from("")))
+    pub fn restore_savegame(internal_filename: String, original_name: String) -> Result<(), AppError> {
+        let internal = PathBuf::from(internal_filename);
+        let original = PathBuf::from(original_name);
+
+        if let Err(_) = copy(&internal, &original) {
+            return Err(AppError::FileWriteError(String::from("Couldn't restore backup.")));
+        }
+        
+        Ok(())
     }
 }
 
