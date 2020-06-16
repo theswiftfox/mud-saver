@@ -205,7 +205,7 @@ impl MudrunnerSave {
     }
 
     // function to install a specific savegame (overwriting the existing one)
-    pub fn install_savegame(&self, savegame: &MudrunnerSave) -> Result<(), AppError> {
+    pub fn restore_savegame(&self, savegame: &MudrunnerSave) -> Result<(), AppError> {
         Err(AppError::SettingsNotFound(String::from("")))
     }
 }
