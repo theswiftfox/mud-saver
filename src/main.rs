@@ -2,7 +2,6 @@
     all(feature = "embed_ui", not(debug_assertions)),
     windows_subsystem = "windows"
 )]
-//#![feature(proc_macro_hygiene, decl_macro)]
 
 extern crate actix_files;
 #[macro_use]
@@ -22,6 +21,7 @@ use chrono::{
 
 use actix_web::{web, App, HttpServer};
 use handlebars::{Context, Handlebars, Helper, HelperResult, Output, RenderContext, RenderError};
+use listenfd::ListenFd;
 
 use std::sync::Mutex;
 
@@ -85,7 +85,7 @@ async fn start_rocket() {
         ),
     );
     let hb_ref = web::Data::new(handlebars);
-    HttpServer::new(move || {
+    let mut server = HttpServer::new(move || {
         App::new()
             // .wrap(middleware::Logger::default())
             .app_data(hb_ref.clone())
@@ -105,10 +105,13 @@ async fn start_rocket() {
             .service(pages::store_mudrunner_save)
             .service(actix_files::Files::new("/static", "./static"))
             .service(actix_files::Files::new("/images", "./images"))
-    })
-    .bind("127.0.0.1:8000")
-    .unwrap()
-    .run()
+    });
+    server = if let Some(l) = ListenFd::from_env().take_tcp_listener(0).unwrap() {
+        server.listen(l).unwrap()
+    } else {
+        server.bind("127.0.0.1:8000").unwrap()
+    };
+    server.run()
     .await
     .unwrap();
 }
