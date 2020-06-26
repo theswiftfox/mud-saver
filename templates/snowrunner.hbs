@@ -4,9 +4,9 @@
         <ul class="w3-ul w3-card">
             {{#each this }}
             <li class="w3-bar">
-                <div id="{{this.uuid}}" class="w3-xxlarge w3-left"
-                    style="margin: 0; position: relative; -ms-transform: translateY(10%); transform: translateY(10%); display: none;">
-                    &#10003;</div>
+                <div id="{{this.uuid}}" class="w3-bar-item w3-left">
+                    <button class="w3-button w3-theme" onclick="load_saves('{{this.uuid}}')">Load Backups</button>
+                </div>
                 <div class="w3-bar-item w3-tooltip" onclick="load_saves('{{this.uuid}}')">
                     {{#if this.meta_data.alias}}
                     <span class="w3-large">{{this.meta_data.alias}}</span>
@@ -18,11 +18,8 @@
                     <span>{{date-time date=this.modified}}</span>
                 </div>
                 <div class="w3-bar-item w3-right">
-                    <button class="w3-button w3-theme"
-                        style="width: 90px; margin: 0; position: relative; -ms-transform: translateY(10%); transform: translateY(10%);"
-                        onclick="open_snowrunner_modal('{{this.uuid}}')">Backup</button>
-                    <button class="w3-button w3-theme"
-                        style="width: 50px; margin: 0; position: relative; -ms-transform: translateY(10%); transform: translateY(10%);">&#x2630;</button>
+                    <button class="w3-button w3-theme" onclick="open_snowrunner_modal('{{this.uuid}}')">Backup</button>
+                    <button class="w3-button w3-theme">&#x2630;</button>
                 </div>
             </li>
             {{/each}}
