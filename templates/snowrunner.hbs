@@ -7,7 +7,7 @@
                 <div id="{{this.uuid}}" class="w3-bar-item w3-left">
                     <button class="w3-button w3-theme" onclick="load_saves('{{this.uuid}}')">Load Backups</button>
                 </div>
-                <div class="w3-bar-item w3-tooltip" onclick="load_saves('{{this.uuid}}')">
+                <div class="w3-bar-item w3-tooltip">
                     {{#if this.meta_data.alias}}
                     <span class="w3-large">{{this.meta_data.alias}}</span>
                     <span class="w3-text w3-tag w3-round-xlarge w3-theme">{{this.uuid}}</span>
