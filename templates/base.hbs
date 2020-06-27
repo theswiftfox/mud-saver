@@ -60,7 +60,8 @@
                     <h2>MudSaver Settings</h2>
                 </header>
                 <div class="w3-container">
-                    <span onclick="close_settings()" class="w3-button w3-display-topright">&times;</span>
+                    <span onclick="close_settings()"
+                        class="w3-button w3-display-topright w3-small w3-black">&times;</span>
                     <ul class="w3-ul">
                         <li class="w3-bar">
                             <div class="w3-bar-item">Color Theme:</div>
@@ -95,8 +96,9 @@
                     </ul>
                 </div>
                 <footer class="w3-container w3-light-gray">
-                    <div class="w3-container">
-                        <button id="save_btn" class="w3-right w3-button" onclick="save_settings()">Save</button>
+                    <div class="w3-container" style="padding: 15px;">
+                        <button id="save_btn" class="w3-right w3-button w3-border w3-round-large w3-theme"
+                            onclick="save_settings()">Save</button>
                     </div>
                 </footer>
             </div>
@@ -549,6 +551,10 @@
                             if (event.keyCode === escapeKey) {
                                 event.preventDefault();
                                 close_settings();
+                            }
+                            if (event.keyCode === enterKey) {
+                                event.preventDefault();
+                                save_settings();
                             }
                         });
                     }
