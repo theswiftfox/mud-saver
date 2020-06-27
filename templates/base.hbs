@@ -437,6 +437,24 @@
             var modal = document.getElementById('mudrunner-save-modal');
             modal.style.display = 'block';
             modal.setAttribute('original_name', original_name);
+
+            // close on escape
+            modal.tabIndex = -1;
+            modal.focus();
+            modal.addEventListener('keyup', function (event) {
+                if (event.keyCode === escapeKey) {
+                    event.preventDefault();
+                    close_mudrunner_modal();
+                }
+            });
+
+            // save on enter inside input field
+            document.getElementById('mudrunner-save-name').addEventListener('keyup', function (event) {
+                if (event.keyCode === enterKey) {
+                    event.preventDefault();
+                    document.getElementById('mudrunner-save-button').click();
+                }
+            });
         }
 
         function close_mudrunner_modal() {
