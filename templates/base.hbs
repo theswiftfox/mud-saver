@@ -16,9 +16,9 @@
 
 <body onload="init()">
     <!-- Sidebar -->
-    <div class="w3-sidebar w3-display-container w3-bar-block w3-card w3-animate-right" style="display:none;right:0"
-        id="side">
-        <button onclick="w3_close_sidebar()()" class="w3-bar-item w3-theme-action w3-button w3-large">Close
+    <div class="w3-sidebar w3-display-container w3-bar-block w3-card w3-animate-right"
+        style="display: none; right: 0; outline: none" id="side">
+        <button onclick="w3_close_sidebar()" class="w3-bar-item w3-theme-action w3-button w3-large">Close
             &times;</button>
         <div class="w3-bar-item w3-button" onclick="load_settings(true)">Settings</div>
         <a href="https://github.com/theswiftfox/mud-saver/issues" target="_blank" class="w3-bar-item w3-button">Report
@@ -41,7 +41,7 @@
             Backup or load savegame
         </div>
         <button id="menuBtn" class="w3-button w3-theme w3-xlarge w3-display-right"
-            onclick="w3_open_sidebar()()">&#x2630;</button>
+            onclick="w3_open_sidebar()">&#x2630;</button>
         <button id="homeBtn" class="w3-button w3-theme w3-xlarge w3-display-left" style="display: none;"
             onclick="load_subpage('/overview')">&#5176;</button>
     </div>
@@ -60,8 +60,7 @@
                     <h2>MudSaver Settings</h2>
                 </header>
                 <div class="w3-container">
-                    <span onclick="document.getElementById('settings-modal').style.display='none'"
-                        class="w3-button w3-display-topright">&times;</span>
+                    <span onclick="close_settings()" class="w3-button w3-display-topright">&times;</span>
                     <ul class="w3-ul">
                         <li class="w3-bar">
                             <div class="w3-bar-item">Color Theme:</div>
@@ -124,9 +123,14 @@
     </div>
 
     <script>
+        const enterKey = 13;
+        const escapeKey = 27;
+
         var settings = null;
         var selected_snowrunner_profile = null;
         var save_snowrunner_profile = null;
+
+        var settings_visible = false;
 
         function init() {
             var http = new XMLHttpRequest();
@@ -222,9 +226,25 @@
 
         function w3_open_sidebar() {
             document.getElementById('main').style.marginRight = '15%';
-            document.getElementById('side').style.width = '15%';
-            document.getElementById('side').style.display = 'block';
+            let sidebar = document.getElementById('side');
+            sidebar.style.width = '15%';
+            sidebar.style.display = 'block';
             document.getElementById('menuBtn').style.display = 'none';
+
+            // close sidebar with esc
+            sidebar.tabIndex = -1;
+            sidebar.focus();
+            sidebar.addEventListener('keyup', function (event) {
+                if (event.keyCode === escapeKey) {
+                    event.preventDefault();
+                    w3_close_sidebar();
+                }
+            });
+            sidebar.addEventListener('focusout', function (event) {
+                if (!settings_visible) {
+                    w3_close_sidebar();
+                }
+            })
         }
 
         function w3_close_sidebar() {
@@ -386,6 +406,24 @@
             var modal = document.getElementById('snowrunner-save-modal');
             modal.style.display = 'block';
             modal.setAttribute('profile', uuid);
+
+            // close on escape
+            modal.tabIndex = -1;
+            modal.focus();
+            modal.addEventListener('keyup', function (event) {
+                if (event.keyCode === escapeKey) {
+                    event.preventDefault();
+                    close_snowrunner_modal();
+                }
+            });
+
+            // save on enter inside input field
+            document.getElementById('snowrunner-save-name').addEventListener('keyup', function (event) {
+                if (event.keyCode === enterKey) {
+                    event.preventDefault();
+                    document.getElementById('snowrunner-save-button').click();
+                }
+            });
         }
 
         function close_snowrunner_modal() {
@@ -417,11 +455,29 @@
                     settings = JSON.parse(http.responseText);
                     display_settings(settings);
                     if (showModal) {
-                        document.getElementById('settings-modal').style.display = 'block';
+                        let popup = document.getElementById('settings-modal');
+                        popup.style.display = 'block';
                         check_valid_settings();
+                        settings_visible = true;
+
+                        // add escape handling to settings modal
+                        popup.tabIndex = -1;
+                        popup.focus();
+                        popup.addEventListener('keyup', function (event) {
+                            if (event.keyCode === escapeKey) {
+                                event.preventDefault();
+                                close_settings();
+                            }
+                        });
                     }
                 }
             };
+        }
+
+        function close_settings() {
+            w3.hide('#settings-modal');
+            settings_visible = false;
+            document.getElementById('side').focus();
         }
 
         function display_settings(settings) {
