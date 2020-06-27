@@ -3,10 +3,7 @@
     <div class="w3-container">
         <ul class="w3-ul w3-card">
             {{#each this }}
-            <li class="w3-bar">
-                <div id="{{this.uuid}}" class="w3-bar-item w3-left">
-                    <button class="w3-button w3-theme" onclick="load_saves('{{this.uuid}}')">Load Backups</button>
-                </div>
+            <li class="w3-bar w3-container">
                 <div class="w3-bar-item w3-tooltip">
                     {{#if this.meta_data.alias}}
                     <span class="w3-large">{{this.meta_data.alias}}</span>
@@ -17,7 +14,9 @@
                     <br>
                     <span>{{date-time date=this.modified}}</span>
                 </div>
-                <div class="w3-bar-item w3-right">
+                <div class="w3-right" style="padding: 15px;">
+                    <button class="w3-button w3-theme" onclick="load_saves('{{this.uuid}}')">Load
+                        Backups</button>
                     <button class="w3-button w3-theme" onclick="open_snowrunner_modal('{{this.uuid}}')">Backup</button>
                     <button class="w3-button w3-theme">&#x2630;</button>
                 </div>
