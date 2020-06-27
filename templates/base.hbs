@@ -114,8 +114,9 @@
             <div class="w3-container w3-border-top w3-padding-8 w3-light-grey">
                 <div class="w3-right">
                     <div class="w3-bar">
-                        <button id="info-retry" class="w3-bar-item w3-button" style="display: none;">Retry</button>
-                        <button id="info-accept" class="w3-bar-item w3-button">Ok</button>
+                        <button id="info-retry" class="w3-bar-item w3-button w3-theme"
+                            style="display: none;">Retry</button>
+                        <button id="info-accept" class="w3-bar-item w3-button w3-red">Ok</button>
                     </div>
                 </div>
             </div>
@@ -176,11 +177,26 @@
             }
         }
 
+        function blurAll() {
+            var tmp = document.createElement("input");
+            document.body.appendChild(tmp);
+            tmp.focus();
+            document.body.removeChild(tmp);
+            tmp.blur();
+        }
+
         function show_info(title, message) {
             show_info_with_action(title, message, null);
         }
 
         function show_info_with_action(title, message, action) {
+            // remove focus from any remaining input elements
+            blurAll();
+            // cleanup so we dont get a ton of event handlers on the same object
+            var old = document.getElementById('info-modal');
+            var info = old.cloneNode(true);
+            old.parentNode.replaceChild(info, old);
+
             w3.hide('#info-retry');
             document.getElementById('info-title').innerHTML = title;
             document.getElementById('info-content').innerHTML = message;
@@ -193,10 +209,23 @@
             } else {
                 btn.onclick = w3.hide('#info-modal');
             }
+
+            // add escape and enter trigger ok action -> aka close this popup
+            info.tabIndex = -1;
+            info.addEventListener('keyup', function (event) {
+                if (event.keyCode === enterKey || event.keyCode === escapeKey) {
+                    event.preventDefault();
+                    btn.click();
+                }
+            });
+
             w3.show('#info-modal');
+            document.getElementById('info-modal').focus();
         }
 
         function show_info_with_retry(title, message, okAction, retryAction) {
+            blurAll();
+
             document.getElementById('info-title').innerHTML = title;
             document.getElementById('info-content').innerHTML = message;
             var okbtn = document.getElementById('info-accept');
@@ -221,12 +250,36 @@
                 w3.hide('#info-retry');
                 retryBtn.action = null;
             }
+
+            // add escape and rigger ok action -> aka close this popup
+            let info = document.getElementById('info-modal');
+            info.tabIndex = -1;
+            info.addEventListener('keyup', function (event) {
+                if (event.keyCode === escapeKey) {
+                    event.preventDefault();
+                    okbtn.click();
+                }
+
+                if (event.keyCode === enterKey) {
+                    event.preventDefault();
+                    if (retryAction != null) {
+                        retryBtn.click();
+                    } else {
+                        okbtn.click();
+                    }
+                }
+            });
+
             w3.show('#info-modal');
+            document.getElementById('info-modal').focus();
         }
 
         function w3_open_sidebar() {
+            var old = document.getElementById('side');
+            var sidebar = old.cloneNode(true);
+            old.parentNode.replaceChild(sidebar, old);
+
             document.getElementById('main').style.marginRight = '15%';
-            let sidebar = document.getElementById('side');
             sidebar.style.width = '15%';
             sidebar.style.display = 'block';
             document.getElementById('menuBtn').style.display = 'none';
@@ -403,13 +456,15 @@
         }
 
         function open_snowrunner_modal(uuid) {
-            var modal = document.getElementById('snowrunner-save-modal');
+            var old = document.getElementById('snowrunner-save-modal');
+            var modal = old.cloneNode(true);
+            old.parentNode.replaceChild(modal, old);
+
             modal.style.display = 'block';
             modal.setAttribute('profile', uuid);
 
             // close on escape
             modal.tabIndex = -1;
-            modal.focus();
             modal.addEventListener('keyup', function (event) {
                 if (event.keyCode === escapeKey) {
                     event.preventDefault();
@@ -424,6 +479,8 @@
                     document.getElementById('snowrunner-save-button').click();
                 }
             });
+
+            document.getElementById('snowrunner-save-name').focus();
         }
 
         function close_snowrunner_modal() {
@@ -434,13 +491,15 @@
         }
 
         function open_mudrunner_modal(original_name) {
-            var modal = document.getElementById('mudrunner-save-modal');
+            var old = document.getElementById('mudrunner-save-modal');
+            var modal = old.cloneNode(true);
+            old.parentNode.replaceChild(modal, old);
+
             modal.style.display = 'block';
             modal.setAttribute('original_name', original_name);
 
             // close on escape
             modal.tabIndex = -1;
-            modal.focus();
             modal.addEventListener('keyup', function (event) {
                 if (event.keyCode === escapeKey) {
                     event.preventDefault();
@@ -455,6 +514,8 @@
                     document.getElementById('mudrunner-save-button').click();
                 }
             });
+
+            document.getElementById('mudrunner-save-name').focus();
         }
 
         function close_mudrunner_modal() {
@@ -473,15 +534,18 @@
                     settings = JSON.parse(http.responseText);
                     display_settings(settings);
                     if (showModal) {
-                        let popup = document.getElementById('settings-modal');
-                        popup.style.display = 'block';
+                        var old = document.getElementById('settings-modal');
+                        var modal = old.cloneNode(true);
+                        old.parentNode.replaceChild(modal, old);
+
+                        modal.style.display = 'block';
                         check_valid_settings();
                         settings_visible = true;
 
                         // add escape handling to settings modal
-                        popup.tabIndex = -1;
-                        popup.focus();
-                        popup.addEventListener('keyup', function (event) {
+                        modal.tabIndex = -1;
+                        modal.focus();
+                        modal.addEventListener('keyup', function (event) {
                             if (event.keyCode === escapeKey) {
                                 event.preventDefault();
                                 close_settings();
