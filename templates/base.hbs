@@ -111,13 +111,13 @@
                     <span id="info-content" class="w3-text"></span>
                 </div>
             </div>
-            <div class="w3-container w3-border-top w3-padding-8 w3-light-grey">
-                <div class="w3-right">
-                    <div class="w3-bar">
-                        <button id="info-retry" class="w3-bar-item w3-button w3-theme"
-                            style="display: none;">Retry</button>
-                        <button id="info-accept" class="w3-bar-item w3-button w3-red">Ok</button>
-                    </div>
+            <div class="w3-bar w3-container w3-border-top w3-padding-8 w3-light-grey">
+                <div class="w3-right" style="padding: 8px;">
+                    <button id="info-retry"
+                        class="w3-bar-item w3-button w3-small w3-border w3-margin-right w3-round-large w3-red"
+                        style="display: none;">Retry</button>
+                    <button id="info-accept"
+                        class="w3-bar-item w3-button w3-small w3-border w3-round-large w3-dark-gray">Ok</button>
                 </div>
             </div>
         </div>
@@ -418,7 +418,7 @@
                         let action = function () {
                             load_saves(selected_snowrunner_profile);
                         }
-                        show_info_with_action('Backup Success!', '', action);
+                        show_info_with_action('Delete Success!', '', action);
                     } else {
                         let retry = function () {
                             delete_snowrunner(save_uuid);
