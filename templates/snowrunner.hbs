@@ -3,11 +3,8 @@
     <div class="w3-container">
         <ul class="w3-ul w3-card">
             {{#each this }}
-            <li class="w3-bar">
-                <div id="{{this.uuid}}" class="w3-xxlarge w3-left"
-                    style="margin: 0; position: relative; -ms-transform: translateY(10%); transform: translateY(10%); display: none;">
-                    &#10003;</div>
-                <div class="w3-bar-item w3-tooltip" onclick="load_saves('{{this.uuid}}')">
+            <li class="w3-bar w3-container">
+                <div class="w3-bar-item w3-tooltip">
                     {{#if this.meta_data.alias}}
                     <span class="w3-large">{{this.meta_data.alias}}</span>
                     <span class="w3-text w3-tag w3-round-xlarge w3-theme">{{this.uuid}}</span>
@@ -17,12 +14,11 @@
                     <br>
                     <span>{{date-time date=this.modified}}</span>
                 </div>
-                <div class="w3-bar-item w3-right">
-                    <button class="w3-button w3-theme"
-                        style="width: 90px; margin: 0; position: relative; -ms-transform: translateY(10%); transform: translateY(10%);"
-                        onclick="open_snowrunner_modal('{{this.uuid}}')">Backup</button>
-                    <button class="w3-button w3-theme"
-                        style="width: 50px; margin: 0; position: relative; -ms-transform: translateY(10%); transform: translateY(10%);">&#x2630;</button>
+                <div class="w3-right" style="padding: 15px;">
+                    <button class="w3-button w3-theme" onclick="load_saves('{{this.uuid}}')">Load
+                        Backups</button>
+                    <button class="w3-button w3-theme" onclick="open_snowrunner_modal('{{this.uuid}}')">Backup</button>
+                    <button class="w3-button w3-theme">&#x2630;</button>
                 </div>
             </li>
             {{/each}}
@@ -44,7 +40,8 @@
                     <input id="snowrunner-save-name" type="text" class="w3-input w3-border w3-round" placeholder="Name">
                 </div>
                 <div class="w3-row w3-section">
-                    <button class="w3-button w3-theme w3-block w3-padding" onclick="backup_snowrunner()">Save</button>
+                    <button id="snowrunner-save-button" class="w3-button w3-theme w3-block w3-padding"
+                        onclick="backup_snowrunner()">Save</button>
                 </div>
             </div>
         </div>
