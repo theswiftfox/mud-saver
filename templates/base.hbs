@@ -228,6 +228,23 @@
             }
         }
 
+        function load_saves_mudrunner(uuid) {
+            var http = new XMLHttpRequest();
+            http.open('GET', '/mud-runner/profile');
+            http.send();
+            http.onreadystatechange = function () {
+                if (http.readyState == 4) {
+                    if (this.status == 200) {
+                        document.getElementById('saves').innerHTML = http.responseText;
+                        //selected_snowrunner_profile = uuid;
+                        w3.show("blabla...");
+                    } else {
+                        console.warn(http.responseText);
+                    }
+                }
+            }
+        }
+
         function backup_snowrunner() {
             var profile = document.getElementById('snowrunner-save-modal').getAttribute('profile');
             var name = document.getElementById('snowrunner-save-name').value;
