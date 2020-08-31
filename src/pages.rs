@@ -90,6 +90,27 @@ pub async fn get_snowrunner_profile(
     }
 }
 
+#[get("/mud-runner/profile")]
+pub async fn get_mudrunner_profile(hb: web::Data<Handlebars<'_>>) -> Result<HttpResponse, AppError> {
+    match MudrunnerSave::get_archived_mudrunner_saves() {
+        Ok(saves) => {
+            match hb.render("mudrunner-saves", &saves) {
+                Ok(b) => {
+                    Ok(HttpResponse::Ok().body(b))
+                }
+                Err(e) => {
+                    dbg!(&e);
+                    Ok(HttpResponse::InternalServerError().finish())
+                }
+            }
+        }
+        Err(e) => {
+            dbg!(&e);
+            Ok(HttpResponse::InternalServerError().finish())
+        }
+    }
+}
+
 #[derive(Deserialize)]
 pub struct SnowRunnerProfileSaveRequest {
     id: String,
