@@ -93,6 +93,7 @@ pub async fn get_snowrunner_profile(
 #[get("/mud-runner/profile")]
 pub async fn get_mudrunner_profile(hb: web::Data<Handlebars<'_>>) -> Result<HttpResponse, AppError> {
     match MudrunnerSave::get_archived_mudrunner_saves() {
+
         Ok(saves) => {
             match hb.render("mudrunner-saves", &saves) {
                 Ok(b) => {
@@ -108,6 +109,7 @@ pub async fn get_mudrunner_profile(hb: web::Data<Handlebars<'_>>) -> Result<Http
             dbg!(&e);
             Ok(HttpResponse::InternalServerError().finish())
         }
+
     }
 }
 
