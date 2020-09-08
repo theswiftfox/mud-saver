@@ -205,7 +205,7 @@ impl MudrunnerSave {
     }
 
     // function to install a specific savegame (overwriting the existing one)
-    pub fn restore_savegame(internal_filename: String, original_name: String) -> Result<(), AppError> {
+    pub fn restore_savegame(internal_filename: &str, original_name: &str) -> Result<(), AppError> {
         let internal = PathBuf::from(internal_filename);
         let original = PathBuf::from(original_name);
 
