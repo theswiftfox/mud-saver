@@ -54,12 +54,29 @@ pub struct MudrunnerSaveRequest {
     user_name: String,
 }
 
+#[derive(Deserialize)]
+pub struct MudrunnerRestoreRequest {
+    internal_name: String,
+    original_name: String,
+}
+
 #[post("/mud-runner/save")]
 pub async fn store_mudrunner_save(
     params: web::Query<MudrunnerSaveRequest>,
 ) -> Result<HttpResponse, AppError> {
     MudrunnerSave::archive_savegame(&params.user_name, &params.original_name)?;
     Ok(HttpResponse::Ok().finish())
+}
+
+#[put("/mud-runner/profile?<internal_name>&<user_name>")]
+pub async fn restore_mud_runner_save(
+    params: web::Query<MudrunnerRestoreRequest>,
+) -> Result<HttpResponse, AppError> {
+    if let Ok(_) = MudrunnerSave::restore_savegame(&params.internal_name, &params.original_name) {
+        Ok(HttpResponse::Ok().finish())
+    } else {
+        Ok(HttpResponse::InternalServerError().finish())
+    }
 }
 
 // /* *** SNOW RUNNER *** */
