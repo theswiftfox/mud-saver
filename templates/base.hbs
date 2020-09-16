@@ -236,8 +236,6 @@
                 if (http.readyState == 4) {
                     if (this.status == 200) {
                         document.getElementById('saves').innerHTML = http.responseText;
-                        //selected_snowrunner_profile = uuid;
-                        w3.show("blabla...");
                     } else {
                         console.warn(http.responseText);
                     }
