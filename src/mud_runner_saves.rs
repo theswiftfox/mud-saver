@@ -212,7 +212,7 @@ impl MudrunnerSave {
         if let Err(_) = copy(&internal, &original) {
             return Err(AppError::FileWriteError(String::from("Couldn't restore backup.")));
         }
-        
+
         Ok(())
     }
 }
