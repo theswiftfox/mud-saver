@@ -1,0 +1,19 @@
+<h2>Stored Saves</h2>
+<div class="w3-container">
+    <ul class="w3-ul w3-card">
+        {{#each this }}
+        <li class="w3-bar">
+            <div class="w3-bar-item w3-tooltip">
+                <span class="w3-large">{{this.user_name}}</span>
+                <br>
+                <span>{{date-time date=this.timestamp}}</span>
+            </div>
+            <div class="w3-bar-item w3-right">
+                <button class="w3-button w3-theme" style="width: 90px;"
+                    onclick="restore_mudrunner('{{this.user_name}}')">Restore</button>
+            </div>
+        </li>
+        {{/each}}
+    </ul>
+</div>
+<br>
