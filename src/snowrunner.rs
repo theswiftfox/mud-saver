@@ -427,22 +427,4 @@ fn try_load_metadata(profile: &str) -> SnowRunnerMetaData {
 
 fn is_profile_dir(dir: &DirEntry) -> bool {
     dir.path().is_dir() && dir.file_name().len() == 32
-    // let files = match read_dir(dir.path()) {
-    //     Ok(f) => f,
-    //     Err(e) => {
-    //         dbg!(e);
-    //         return false;
-    //     }
-    // };
-    // for file in files {
-    //     if let Ok(file) = file {
-    //         if file.path().is_file() {
-    //             if let Some(ext) = file.path().extension() {
-    //                 return ext.eq(SAVEGAME_FILE_EXT);
-    //             }
-    //         }
-    //     }
-    // }
-    // }
-    // return false;
 }
