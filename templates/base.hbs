@@ -317,6 +317,27 @@
             }
         }
 
+        function restore_mudrunner(user_name) {
+            var http = new XMLHttpRequest();
+            http.open('PUT', '/mud-runner/profile?user_name=' + user_name);
+            http.send();
+            http.onreadystatechange = function () {
+                if (http.readyState == 4) {
+                    if (this.status == 200) {
+                        alert('Restore successful');
+                    }
+                    var show_buttons = true;
+                    if (settings.enable_mudrunner && settings.enable_snowrunner) {
+                        show_buttons = false;
+                    }
+                    load_subpage('/mud-runner', show_buttons, show_buttons);
+                    load_saves_mudrunner();
+                } else {
+                    alert(http.responseText);
+                }
+            }
+        }
+
         function open_snowrunner_modal(uuid) {
             var modal = document.getElementById('snowrunner-save-modal');
             modal.style.display = 'block';
