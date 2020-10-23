@@ -59,6 +59,12 @@ pub struct MudrunnerRestoreRequest {
     user_name: String,
 }
 
+#[derive(Deserialize)]
+pub struct SnowrunnerUpdateAliasRequest {
+    new_alias: String,
+    uuid: String,
+}
+
 #[post("/mud-runner/save")]
 pub async fn store_mudrunner_save(
     params: web::Query<MudrunnerSaveRequest>,
@@ -72,6 +78,18 @@ pub async fn restore_mud_runner_save(
     params: web::Query<MudrunnerRestoreRequest>,
 ) -> Result<HttpResponse, AppError> {
     if let Ok(_) = MudrunnerSave::restore_savegame(&params.user_name) {
+        Ok(HttpResponse::Ok().finish())
+    } else {
+        Ok(HttpResponse::InternalServerError().finish())
+    }
+}
+
+#[put("/snow-runner/update-alias")]
+pub async fn update_snow_runner_profile_alias(
+    params: web::Query<SnowrunnerUpdateAliasRequest>,
+) -> Result<HttpResponse, AppError> {
+    let mut profile = SnowRunnerProfile::get_snowrunner_profile(&params.uuid)?;
+    if let Ok(_) = profile.update_profile_name(&params.new_alias) {
         Ok(HttpResponse::Ok().finish())
     } else {
         Ok(HttpResponse::InternalServerError().finish())
