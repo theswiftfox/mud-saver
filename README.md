@@ -1,12 +1,18 @@
-[![Build Status](https://dev.azure.com/theswiftfox/mud-saver/_apis/build/status/mud-saver-build?branchName=master)](https://dev.azure.com/theswiftfox/mud-saver/_build/latest?definitionId=1&branchName=master)
-
 # mud-saver
 
 A savegame manager for MudRunner™ and SnowRunner™.  
 Backend written in [rust](https://www.rust-lang.org/) with a web-based frontend.  
 
+## Install
+
+### Windows
+Currently no installer is provided. You can grab the latest release from the [releases](https://github.com/theswiftfox/mud-saver/releases) page. Extract the zip file and run mud-saver.exe. The release builds are built with embedded ui.
+
+### Linux
+We don't have automated linux builds for now. On linux you will have to follow the instructions below to manually build the application.
+
 ## Build  
-Requires rust nightly  
+Requires rust stable  
 
 Check out repository and build with cargo:  
 ```
@@ -14,9 +20,7 @@ git clone https://github.com/theswiftfox/mud-saver
 cd mud-saver
 cargo run
 ```
-Open your favorite browser at 'localhost:8000'
-
-> [rocket-rs](https://rocket.rs/) supports hot reloading of templates and static files in debug mode -> no need to restart the application when chaning frontend and testing via browser  
+Open your favorite browser at 'localhost:8000' 
 
 ### Run with native ui
 The application can be compiled with its own ui utilizing [web-view](https://github.com/Boscop/web-view) by enabling a feature switch:  
