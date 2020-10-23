@@ -67,11 +67,10 @@ pub async fn store_mudrunner_save(
     Ok(HttpResponse::Ok().finish())
 }
 
-#[put("/mud-runner/profile?<user_name>")]
+#[put("/mud-runner/profile")]
 pub async fn restore_mud_runner_save(
     params: web::Query<MudrunnerRestoreRequest>,
 ) -> Result<HttpResponse, AppError> {
-    dbg!("HELLO PUUUT");
     if let Ok(_) = MudrunnerSave::restore_savegame(&params.user_name) {
         Ok(HttpResponse::Ok().finish())
     } else {
