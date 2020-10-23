@@ -121,8 +121,8 @@ impl MudrunnerSave {
         // take it out and later put the now one back in.
         // mudrunnersave_vec.retain(|&x| x.user_name != self.user_name);
         if let Some(existing_save) = existing_saves.iter().find(|&s| s.user_name.eq(user_name)) {
-            if let Some(f) = &existing_save.internal_filename {
-                remove_file(f);
+            if let Some(_f) = &existing_save.internal_filename {
+                return Err(AppError::FileCreateError(String::from("Savegame with that username already archived")));
             }
             existing_saves.retain(|s| !s.user_name.eq(user_name))
         }
