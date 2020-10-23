@@ -234,9 +234,22 @@ impl MudrunnerSave {
             }
 
             let internal =PathBuf::from(internal_filename.unwrap());
-            let original = PathBuf::from(target_save.original_name.clone());
 
-            if let Err(_) = copy(&internal, &original) {
+            let original = PathBuf::from(target_save.original_name.clone());
+            let mut to: PathBuf = match get_mudrunner_data_dir() {
+                Ok(d) => d,
+                Err(_) => {
+                    return Err(AppError::MudrunnerProfileDirMissing(String::from(
+                        "Mudrunner profile directory missing",
+                    )));
+                }
+            };
+            to.push(original);
+
+            dbg!(&internal);
+            dbg!(&to);
+
+            if let Err(_) = copy(&internal, &to) {
                 return Err(AppError::FileWriteError(String::from("Couldn't restore backup.")));
             }
         } else {
