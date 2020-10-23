@@ -105,6 +105,7 @@ async fn start_rocket() {
             .service(pages::store_mudrunner_save)
             .service(pages::restore_mud_runner_save)
             .service(pages::get_mudrunner_profile)
+            .service(pages::update_snow_runner_profile_alias)
             .service(actix_files::Files::new("/static", "./static"))
             .service(actix_files::Files::new("/images", "./images"))
     });
