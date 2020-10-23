@@ -205,12 +205,42 @@ impl MudrunnerSave {
     }
 
     // function to install a specific savegame (overwriting the existing one)
-    pub fn restore_savegame(internal_filename: &str, original_name: &str) -> Result<(), AppError> {
-        let internal = PathBuf::from(internal_filename);
-        let original = PathBuf::from(original_name);
+    pub fn restore_savegame(user_name: &str) -> Result<(), AppError> {
+        let mut path = get_mudrunner_profile_dir()?;
+        path.push("MudrunnerMetadata.json");
+        let archived_saves = match File::open(&path) {
+            Ok(f) => {
+                let reader = BufReader::new(f);
+                match serde_json::from_reader::<BufReader<File>, Vec<MudrunnerSave>>(reader) {
+                    Ok(saves) => saves,
+                    Err(e) => {
+                        dbg!(&e);
+                        return Err(AppError::FileReadError(String::from(
+                            "Error reading \"MudrunnerMetadata.json\"",
+                        )));
+                    }
+                }
+            }
+            Err(_) => return Err(AppError::FileReadError(String::from(
+                "Error reading \"MudrunnerMetadata.json\"",
+            )))
+        };
 
-        if let Err(_) = copy(&internal, &original) {
-            return Err(AppError::FileWriteError(String::from("Couldn't restore backup.")));
+        // Check if we have a savegame with the desired user_name available.
+        if let Some(target_save) = archived_saves.iter().find(|&s| s.user_name.eq(user_name)){
+            let internal_filename = target_save.internal_filename.clone();
+            if internal_filename == None {
+                return Err(AppError::FileReadError(String::from("Mudrunner Metadata corrupted")));
+            }
+
+            let internal =PathBuf::from(internal_filename.unwrap());
+            let original = PathBuf::from(target_save.original_name.clone());
+
+            if let Err(_) = copy(&internal, &original) {
+                return Err(AppError::FileWriteError(String::from("Couldn't restore backup.")));
+            }
+        } else {
+            return Err(AppError::SavegameNotFound(String::from("Desired user_name not available")));
         }
 
         Ok(())
