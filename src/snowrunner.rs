@@ -70,6 +70,12 @@ impl SnowRunnerMetaData {
 
         Ok(())
     }
+
+    fn update_profile_name(&mut self, new_name: &str, uuid: &str) -> Result<(), AppError> {
+        self.alias  = Some(new_name.to_string());
+
+        self.store(uuid)
+    }
 }
 
 impl SnowRunnerProfile {
@@ -361,6 +367,10 @@ impl SnowRunnerProfile {
 
     fn store_metadata(&self) -> Result<(), AppError> {
         self.meta_data.store(&self.uuid)
+    }
+
+    pub fn update_profile_name(&mut self, new_name: &str) -> Result<(), AppError> {
+        self.meta_data.update_profile_name(new_name, &self.uuid)
     }
 }
 
