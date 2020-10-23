@@ -21,21 +21,28 @@ pub struct MudrunnerSave {
 impl MudrunnerSave {
     // function to get a vector of the mudrunner savegames' titles/user names in our app's storage
     pub fn get_archived_mudrunner_saves() -> Result<Vec<MudrunnerSave>, AppError> {
-        let path = get_mudrunner_profile_dir()?;
-        let dir_listing = match read_dir(&path) {
-            Ok(d) => d,
-            Err(_) => {
-                return Err(AppError::MudrunnerArchiveDirMissing(String::from(
-                    "Mudrunner archive directory missing",
-                )))
+        let mut path = get_mudrunner_profile_dir()?;
+        path.push("MudrunnerMetadata.json");
+
+        let archived_saves = match File::open(&path) {
+            Ok(f) => {
+                let reader = BufReader::new(f);
+                match serde_json::from_reader::<BufReader<File>, Vec<MudrunnerSave>>(reader) {
+                    Ok(saves) => {
+                        saves
+                    }
+                    Err(e) => {
+                        dbg!(&e);
+                        return Err(AppError::FileReadError(String::from(
+                            "Error reading \"MudrunnerMetadata.json\"",
+                        )));
+                    }
+                }
             }
+            Err(_) => Vec::<MudrunnerSave>::new()
         };
 
-        // FIXME: We need some kind of metadata to get the user_name corresponding to a file.
-
-        Err(AppError::MudrunnerArchiveDirMissing(String::from(
-            "Mudrunner archive directory missing",
-        )))
+        Ok(archived_saves)
     }
 
     // function to get a vector of the mudrunner savegames' file names in Mudrunner's storage
@@ -114,8 +121,8 @@ impl MudrunnerSave {
         // take it out and later put the now one back in.
         // mudrunnersave_vec.retain(|&x| x.user_name != self.user_name);
         if let Some(existing_save) = existing_saves.iter().find(|&s| s.user_name.eq(user_name)) {
-            if let Some(f) = &existing_save.internal_filename {
-                remove_file(f);
+            if let Some(_f) = &existing_save.internal_filename {
+                return Err(AppError::FileCreateError(String::from("Savegame with that username already archived")));
             }
             existing_saves.retain(|s| !s.user_name.eq(user_name))
         }
@@ -198,8 +205,58 @@ impl MudrunnerSave {
     }
 
     // function to install a specific savegame (overwriting the existing one)
-    pub fn install_savegame(&self, savegame: &MudrunnerSave) -> Result<(), AppError> {
-        Err(AppError::SettingsNotFound(String::from("")))
+    pub fn restore_savegame(user_name: &str) -> Result<(), AppError> {
+        let mut path = get_mudrunner_profile_dir()?;
+        path.push("MudrunnerMetadata.json");
+        let archived_saves = match File::open(&path) {
+            Ok(f) => {
+                let reader = BufReader::new(f);
+                match serde_json::from_reader::<BufReader<File>, Vec<MudrunnerSave>>(reader) {
+                    Ok(saves) => saves,
+                    Err(e) => {
+                        dbg!(&e);
+                        return Err(AppError::FileReadError(String::from(
+                            "Error reading \"MudrunnerMetadata.json\"",
+                        )));
+                    }
+                }
+            }
+            Err(_) => return Err(AppError::FileReadError(String::from(
+                "Error reading \"MudrunnerMetadata.json\"",
+            )))
+        };
+
+        // Check if we have a savegame with the desired user_name available.
+        if let Some(target_save) = archived_saves.iter().find(|&s| s.user_name.eq(user_name)){
+            let internal_filename = target_save.internal_filename.clone();
+            if internal_filename == None {
+                return Err(AppError::FileReadError(String::from("Mudrunner Metadata corrupted")));
+            }
+
+            let internal =PathBuf::from(internal_filename.unwrap());
+
+            let original = PathBuf::from(target_save.original_name.clone());
+            let mut to: PathBuf = match get_mudrunner_data_dir() {
+                Ok(d) => d,
+                Err(_) => {
+                    return Err(AppError::MudrunnerProfileDirMissing(String::from(
+                        "Mudrunner profile directory missing",
+                    )));
+                }
+            };
+            to.push(original);
+
+            dbg!(&internal);
+            dbg!(&to);
+
+            if let Err(_) = copy(&internal, &to) {
+                return Err(AppError::FileWriteError(String::from("Couldn't restore backup.")));
+            }
+        } else {
+            return Err(AppError::SavegameNotFound(String::from("Desired user_name not available")));
+        }
+
+        Ok(())
     }
 }
 
