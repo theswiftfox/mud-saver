@@ -387,6 +387,31 @@
             }
         }
 
+        function save_alias_snowrunner() {
+            var profile = document.getElementById('snowrunner-alias-modal').getAttribute('profile');
+            var name = document.getElementById('snowrunner-alias-name').value;
+            var http = new XMLHttpRequest();
+            http.open('PUT', '/snow-runner/update-alias?new_alias=' + name + '&uuid=' + profile);
+            http.send();
+            http.onreadystatechange = function () {
+                if (http.readyState == 4) {
+                    if (this.status == 200) {
+                        var action = function () {
+                            close_edit_snowrunner_profile_modal();
+                            var show_buttons = true;
+                            if (settings.enable_mudrunner && settings.enable_snowrunner) {
+                                show_buttons = false;
+                            }
+                            load_subpage('/snow-runner', show_buttons, show_buttons);
+                        };
+                        show_info_with_action('Alias saved!', '', action);
+                    } else {
+                        show_info_with_retry('Error on Update Alias', 'Cause:<br>' + http.responseText, null, save_alias_snowrunner);
+                    }
+                }
+            }
+        }
+
         function backup_snowrunner() {
             var profile = document.getElementById('snowrunner-save-modal').getAttribute('profile');
             var name = document.getElementById('snowrunner-save-name').value;
@@ -479,7 +504,7 @@
             http.onreadystatechange = function () {
                 if (http.readyState == 4) {
                     if (this.status == 200) {
-                        let action = function() {
+                        let action = function () {
                             var show_buttons = true;
                             if (settings.enable_mudrunner && settings.enable_snowrunner) {
                                 show_buttons = false;
@@ -491,6 +516,41 @@
                     }
                 }
             }
+        }
+
+        function edit_snowrunner_profile_modal(uuid) {
+            var old = document.getElementById('snowrunner-alias-modal');
+            var modal = old.cloneNode(true);
+            old.parentNode.replaceChild(modal, old);
+
+            modal.style.display = 'block';
+            modal.setAttribute('profile', uuid);
+
+            // close on escape
+            modal.tabIndex = -1;
+            modal.addEventListener('keyup', function (event) {
+                if (event.keyCode === escapeKey) {
+                    event.preventDefault();
+                    close_snowrunner_edit_profile_modal();
+                }
+            });
+
+            // save on enter inside input field
+            document.getElementById('snowrunner-alias-name').addEventListener('keyup', function (event) {
+                if (event.keyCode === enterKey) {
+                    event.preventDefault();
+                    document.getElementById('snowrunner-alias-button').click();
+                }
+            });
+
+            document.getElementById('snowrunner-alias-name').focus();
+        }
+
+        function close_edit_snowrunner_profile_modal() {
+            var modal = document.getElementById('snowrunner-alias-modal');
+            modal.style.display = 'none';
+            modal.setAttribute('profile', null)
+            document.getElementById('snowrunner-alias-name').value = null;
         }
 
         function open_snowrunner_modal(uuid) {
