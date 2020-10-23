@@ -18,7 +18,8 @@
                     <button class="w3-button w3-theme" onclick="load_saves('{{this.uuid}}')">Load
                         Backups</button>
                     <button class="w3-button w3-theme" onclick="open_snowrunner_modal('{{this.uuid}}')">Backup</button>
-                    <button class="w3-button w3-theme">&#x2630;</button>
+                    <button class="w3-button w3-theme"
+                        onclick="edit_snowrunner_profile_modal('{{this.uuid}}')">&#x2630;</button>
                 </div>
             </li>
             {{/each}}
@@ -42,6 +43,27 @@
                 <div class="w3-row w3-section">
                     <button id="snowrunner-save-button" class="w3-button w3-theme w3-block w3-padding"
                         onclick="backup_snowrunner()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="snowrunner-alias-modal" class="w3-modal">
+    <div class="w3-modal-content">
+        <div class="w3-card">
+            <header class="w3-panel w3-theme">
+                <h2>Change Alias</h2>
+            </header>
+            <div class="w3-container">
+                <span onclick="close_edit_snowrunner_profile_modal()"
+                    class="w3-button w3-display-topright">&times;</span>
+                <div class="w3-row w3-section">
+                    <input id="snowrunner-alias-name" type="text" class="w3-input w3-border w3-round"
+                        placeholder="Name">
+                </div>
+                <div class="w3-row w3-section">
+                    <button id="snowrunner-alias-button" class="w3-button w3-theme w3-block w3-padding"
+                        onclick="save_alias_snowrunner()">Save</button>
                 </div>
             </div>
         </div>
