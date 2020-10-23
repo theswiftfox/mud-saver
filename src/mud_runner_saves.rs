@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use chrono::{offset::Utc, DateTime};
-use std::fs::{copy, metadata, read_dir, DirEntry, File, remove_file};
-use std::io::{BufReader, Error};
+use std::fs::{copy, metadata, read_dir, File};
+use std::io::{BufReader};
 use std::path::PathBuf;
 
 use crate::error::AppError;

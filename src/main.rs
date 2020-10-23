@@ -87,7 +87,6 @@ async fn start_rocket() {
     let hb_ref = web::Data::new(handlebars);
     let mut server = HttpServer::new(move || {
         App::new()
-            // .wrap(middleware::Logger::default())
             .app_data(hb_ref.clone())
             .service(pages::exit)
             .service(pages::index)
