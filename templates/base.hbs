@@ -479,14 +479,16 @@
             http.onreadystatechange = function () {
                 if (http.readyState == 4) {
                     if (this.status == 200) {
-                        alert('Restore successful');
+                        let action = function() {
+                            var show_buttons = true;
+                            if (settings.enable_mudrunner && settings.enable_snowrunner) {
+                                show_buttons = false;
+                            }
+                            load_subpage('/mud-runner', show_buttons, show_buttons);
+                            load_saves_mudrunner();
+                        }
+                        show_info_with_action('Restore Succesful', '', action);
                     }
-                    var show_buttons = true;
-                    if (settings.enable_mudrunner && settings.enable_snowrunner) {
-                        show_buttons = false;
-                    }
-                    load_subpage('/mud-runner', show_buttons, show_buttons);
-                    load_saves_mudrunner();
                 } else {
                     alert(http.responseText);
                 }
