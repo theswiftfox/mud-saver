@@ -56,8 +56,7 @@ pub struct MudrunnerSaveRequest {
 
 #[derive(Deserialize)]
 pub struct MudrunnerRestoreRequest {
-    internal_name: String,
-    original_name: String,
+    user_name: String,
 }
 
 #[post("/mud-runner/save")]
