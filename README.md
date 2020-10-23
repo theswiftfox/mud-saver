@@ -1,4 +1,4 @@
-[![Build Status](https://dev.azure.com/theswiftfox/mud-saver/_apis/build/status/mud-saver-build?branchName=develop)](https://dev.azure.com/theswiftfox/mud-saver/_build/latest?definitionId=1&branchName=develop)
+[![Build Status](https://dev.azure.com/theswiftfox/mud-saver/_apis/build/status/mud-saver-build?branchName=master)](https://dev.azure.com/theswiftfox/mud-saver/_build/latest?definitionId=1&branchName=master)
 
 # mud-saver
 
